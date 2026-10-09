@@ -83,8 +83,8 @@ Both Apps Script and GitHub Pages are free.
 1. **Deploy the relay.** Open <https://script.new> (logged in with the Google account
    that should own the calendar) and paste [`apps-script/Code.gs`](./apps-script/Code.gs),
    **Save**, then *Deploy → New deployment → **Web app***:
-   - **Execute as: Me**, **Who has access: Anyone** → **Deploy** → copy the URL
-     ending in `/exec`.
+   - **Execute as: User accessing the app**, **Who has access: Anyone** → **Deploy**
+     → copy the URL ending in `/exec`.
 2. **Host the sync page.** Publish this repo on GitHub Pages
    (*Settings → Pages → Deploy from a branch → `main` / root*), giving you
    `https://<your-user>.github.io/<repo>/sync/`.
@@ -93,31 +93,36 @@ Both Apps Script and GitHub Pages are free.
    - Set `BB_CONFIG.SYNC_PAGE_URL` in [`src/userscript.body.js`](./src/userscript.body.js)
      to your sync URL, run `node build.js`, then reinstall/reload whichever option you
      picked in §2.
-4. **Share the calendar with the class.** Synced deadlines land in the operator's
-   **"Blackboard Deadlines"** calendar (created automatically on first sync). In Google
-   Calendar: *calendar menu → Settings and sharing → Access permissions* → share by
-   email or create a public read-only link so everyone can add it to their own calendar.
-5. **Use it.** On the Blackboard calendar click **"Đồng bộ Google Calendar"** → the
-   page lists upcoming deadlines → press **"Đồng bộ vào Google Calendar"**. No Google
-   login popup at all. Results (*created / updated / failed*) show on the sync page and
-   back on Blackboard as a toast.
+4. **Use it — everyone syncs into their own calendar.** On the Blackboard calendar
+   click **"Đồng bộ Google Calendar"** → the page lists your upcoming deadlines →
+   press **"Đồng bộ vào Google Calendar"**. A popup opens:
+   - **First run:** Google asks you to authorize the script once. Seeing *"This app
+     isn't verified" → Advanced → Go to (unsafe)* is normal for a small script (the
+     operator can submit it for verification later). Press Allow, close the popup,
+     press the sync button again.
+   - **Every later run:** the popup shows *"Đồng bộ xong: tạo mới X, cập nhật Y."*
+     and closes itself. Events land in **your own** "Blackboard Deadlines" calendar,
+     created automatically on first sync.
 
 ![Mock screenshot: sync page with fake deadlines](docs/screenshot-sync.svg)
 
 Notes:
 
-- Because the relay runs as the operator (*Execute as: Me*), users grant **nothing**:
-  no Client ID, no consent screen, **no 100-test-user limit**, no OAuth verification.
-- **Re-running is safe:** every event keeps a fixed ID, so syncing again updates
-  instead of duplicating (insert → 409 → patch happens inside the script). Nothing is
-  ever deleted automatically.
+- Everyone writes to **their own** Google calendar: the relay runs as the person
+  clicking (*Execute as: User accessing*). No Client ID, no test-user limit, no OAuth
+  verification required — only the one-time in-popup consent.
+- The sync page sends events through a **popup form POST** (a real navigation, so the
+  browser carries your Google session; a cross-origin fetch would be blocked).
+- **Re-running is safe:** every event keeps a fixed ID, syncing again updates instead
+  of duplicating (insert → 409 → patch happens inside the script). Nothing is ever
+  deleted automatically.
+- **The script requests full Calendar access** (`https://www.googleapis.com/auth/calendar`)
+  because Apps Script's Calendar service has no narrower scope. It only creates and
+  updates your "Blackboard Deadlines" calendar — but Google's consent wording is
+  broader; that is Google's screen, not ours.
 - **Optional abuse guard:** set a Script Property `token` in Apps Script (*Project
   Settings → Script properties*) and put the same value into `RELAY_TOKEN` in
-  [`sync/sync.js`](./sync/sync.js). Without it, anyone who finds the `/exec` URL can
-  push events into the shared calendar (harmless, but noisy).
-- *Execute as: User* would write into each user's own calendar instead, but requires
-  every user to authorize the script directly (browsers block the cross-origin cookie
-  handshake), so it is **not** recommended.
+  [`sync/sync.js`](./sync/sync.js).
 - Anyone who cannot or does not want to use Phase 2 still fully has Phase 1.
 
 ### 4. Limitations
@@ -138,7 +143,7 @@ Notes:
   "newer" than an earlier one. **Not verified** that Google Calendar uses it to update
   existing entries — if duplicates appear, delete the old ones and import again.
 - Phase 2 pop-up windows may be blocked by the browser — allow pop-ups for Blackboard.
-- Phase 2 sends deadline titles and times to the operator's Apps Script endpoint; the
+- Phase 2 sends deadline titles and times to the Apps Script relay endpoint; the
   `/exec` URL is effectively public — use the optional token if that bothers you.
 
 ### 5. Privacy & Security
@@ -148,12 +153,12 @@ Notes:
 - The script calls only: `blackboard.hcmiu.edu.vn` (same-origin `fetch` with
   `credentials: 'same-origin'`) and your sync page; only the sync page then calls
   `script.google.com` (the relay). It never uses `GM_xmlhttpRequest`.
-- **No accounts, no tokens, no stored credentials anywhere.** Phase 2 needs no Google
-  login in your browser at all: the page posts deadline data to the relay, and the
-  relay writes it into the operator's calendar with the operator's own authorization.
+- **Nothing is stored in your browser.** Phase 2 asks for a one-time Google consent
+  for the Apps Script (inside the popup); the script then writes into **your own**
+  "Blackboard Deadlines" calendar using your own Google authorization.
 - Phase 2 exchanges data with `postMessage`: **both sides verify `event.origin`**
-  (and the sending window), validate the message schema, never use `targetOrigin "*"`,
-  and never put event data in a URL.
+  (and the sending window), validate the message schema **and a per-click nonce**,
+  never use `targetOrigin "*"`, and never put event data in a URL.
 - **Read the source before installing**, and never share your personal Blackboard
   `.ics` feed link — it contains your schedule.
 
@@ -256,7 +261,8 @@ Apps Script và GitHub Pages đều miễn phí.
 1. **Deploy relay.** Mở <https://script.new> (đăng nhập bằng tài khoản Google sẽ giữ
    lịch), dán [`apps-script/Code.gs`](./apps-script/Code.gs), **Save**, rồi
    *Deploy → New deployment → **Web app***:
-   - **Execute as: Me**, **Who has access: Anyone** → **Deploy** → copy URL kết thúc `/exec`.
+   - **Execute as: User accessing the app**, **Who has access: Anyone** → **Deploy**
+     → copy URL kết thúc `/exec`.
 2. **Đưa trang sync lên mạng.** Publish repo này bằng GitHub Pages
    (*Settings → Pages → Deploy from a branch → `main` / root*), ra
    `https://<user-của-bạn>.github.io/<repo>/sync/`.
@@ -265,30 +271,34 @@ Apps Script và GitHub Pages đều miễn phí.
    - Đặt `BB_CONFIG.SYNC_PAGE_URL` trong [`src/userscript.body.js`](./src/userscript.body.js)
      đúng URL trang sync, chạy `node build.js`, rồi cài lại/nạp lại cách bạn đã chọn ở
      mục 2.
-4. **Chia sẻ lịch cho cả lớp.** Deadline sau khi đồng bộ nằm trong lịch
-   **"Blackboard Deadlines"** của người vận hành (tự tạo ở lần đồng bộ đầu). Trên
-   Google Calendar: *menu lịch → Settings and sharing → Access permissions* → chia sẻ
-   theo email hoặc tạo link công khai chỉ-đọc để mọi người thêm vào lịch của họ.
-5. **Dùng.** Trên trang Calendar Blackboard bấm **"Đồng bộ Google Calendar"** → trang
-   liệt kê deadline chưa qua hạn → bấm **"Đồng bộ vào Google Calendar"**. Không có
-   popup đăng nhập Google nào. Kết quả (*tạo mới / cập nhật / lỗi*) hiện trên trang
-   sync và quay lại hiện trên Blackboard.
+4. **Dùng — mỗi người ghi vào lịch của chính mình.** Trên trang Calendar Blackboard
+   bấm **"Đồng bộ Google Calendar"** → trang liệt kê deadline chưa qua hạn → bấm
+   **"Đồng bộ vào Google Calendar"**. Cửa sổ popup mở ra:
+   - **Lần đầu:** Google hỏi bạn ủy quyền script 1 lần. Màn hình *"This app isn't
+     verified" → Advanced → Go to (unsafe)* là bình thường với script nhỏ (người vận
+     hành có thể gửi xác minh sau). Bấm Allow, đóng popup, bấm Đồng bộ lần nữa.
+   - **Các lần sau:** popup hiện *"Đồng bộ xong: tạo mới X, cập nhật Y."* rồi tự
+     đóng. Sự kiện nằm trong lịch **"Blackboard Deadlines" của chính bạn**, tự tạo ở
+     lần đồng bộ đầu.
 
 ![Ảnh minh họa (giả): trang sync với dữ liệu mẫu](docs/screenshot-sync.svg)
 
 Ghi chú:
 
-- Vì relay chạy bằng tài khoản người vận hành (*Execute as: Me*), người dùng
-  **không cấp quyền gì**: không Client ID, không màn hình đồng ý, **không giới hạn 100
-  test user**, không cần xác minh OAuth của Google.
+- **Mỗi người ghi vào lịch của chính mình:** relay chạy bằng tài khoản của người đang
+  bấm (*Execute as: User accessing*). Không Client ID, không giới hạn 100 test user,
+  không cần xác minh OAuth — chỉ có màn hình ủy quyền 1 lần trong popup.
+- Trang sync gửi sự kiện qua **popup form POST** (điều hướng thật nên trình duyệt mang
+  theo phiên Google của bạn; fetch cross-origin sẽ bị chặn).
 - **Đồng bộ lại an toàn:** mỗi sự kiện có ID cố định, chạy lại là cập nhật chứ không
   nhân đôi (insert → 409 → patch nằm trong script). Không có gì bị tự xóa.
+- **Script xin quyền toàn bộ lịch** (`https://www.googleapis.com/auth/calendar`) vì
+  dịch vụ Calendar của Apps Script không có scope hẹp hơn. Thực tế nó chỉ tạo/cập nhật
+  lịch "Blackboard Deadlines" — nhưng lời mời đồng ý của Google rộng hơn; đó là màn
+  hình của Google, không phải của mình.
 - **Chống spam tùy chọn:** đặt Script Property `token` trong Apps Script (*Project
   Settings → Script properties*) và điền cùng giá trị vào `RELAY_TOKEN` trong
-  [`sync/sync.js`](./sync/sync.js). Nếu không, ai lọt được URL `/exec` cũng đẩy được
-  sự kiện vào lịch chung (vô hại nhưng dễ nhiễu).
-- *Execute as: User* sẽ ghi vào lịch của từng người nhưng đòi mỗi người ủy quyền script
-  trực tiếp (trình duyệt chặn handshake cookie cross-origin) nên **không khuyến nghị**.
+  [`sync/sync.js`](./sync/sync.js).
 - Ai không dùng Giai đoạn 2 vẫn dùng được đầy đủ Giai đoạn 1.
 
 ### 4. Giới hạn
@@ -308,8 +318,8 @@ Ghi chú:
   trùng UID hay không — nếu bị trùng, xóa bản cũ rồi import lại.
 - Trang sync bật cửa sổ mới — trình duyệt có thể chặn pop-up; hãy cho phép pop-up
   cho Blackboard.
-- Giai đoạn 2 gửi tiêu đề và giờ hạn nộp tới Apps Script endpoint của người vận hành;
-  URL `/exec` mặc nhiên công khai — dùng token tùy chọn nếu bạn thấy ngại.
+- Giai đoạn 2 gửi tiêu đề và giờ hạn nộp tới Apps Script relay endpoint; URL `/exec`
+  mặc nhiên công khai — dùng token tùy chọn nếu bạn thấy ngại.
 
 ### 5. Quyền riêng tư và bảo mật
 
@@ -318,12 +328,12 @@ Ghi chú:
 - Script chỉ gọi: `blackboard.hcmiu.edu.vn` (fetch cùng domain với
   `credentials: 'same-origin'`) và trang sync; chỉ trang sync gọi tiếp
   `script.google.com` (relay). Không dùng `GM_xmlhttpRequest`.
-- **Không có tài khoản, không token, không lưu thông tin xác thực ở bất kỳ đâu.**
-  Giai đoạn 2 không cần đăng nhập Google trong trình duyệt: trang post dữ liệu deadline
-  tới relay, relay ghi vào lịch của người vận hành bằng ủy quyền của chính họ.
+- **Không lưu gì trong trình duyệt của bạn.** Giai đoạn 2 chỉ xin ủy quyền Apps Script
+  1 lần (trong popup); script ghi vào **lịch "Blackboard Deadlines" của chính bạn**
+  bằng ủy quyền Google của bạn.
 - Giai đoạn 2 trao đổi dữ liệu qua `postMessage`: **cả hai phía đều kiểm tra
-  `event.origin`** (và cửa sổ gửi), validate cấu trúc thông điệp, không dùng
-  `targetOrigin "*"`, không đưa dữ liệu sự kiện lên URL.
+  `event.origin`** (và cửa sổ gửi), validate cấu trúc thông điệp **và nonce mỗi lần
+  bấm**, không dùng `targetOrigin "*"`, không đưa dữ liệu sự kiện lên URL.
 - **Khuyến khích đọc mã nguồn trước khi cài**, và không chia sẻ link feed `.ics` cá
   nhân của Blackboard — nó chứa lịch của chính bạn.
 

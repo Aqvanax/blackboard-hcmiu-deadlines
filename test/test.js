@@ -359,6 +359,8 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(!src.includes('googleusercontent.com'), 'không còn Client ID OAuth');
   assert.ok(src.includes("type: 'bbhcmiu-sync'"), 'gửi đúng loại thông điệp');
   assert.ok(src.includes('core.buildGoogleEvent'), 'dựng resource bằng core');
+  assert.ok(src.includes('name="payload"'), 'gửi qua form POST để mang cookie Google');
+  assert.ok(src.includes('relayNonce'), 'có nonce chống giả mạo postMessage');
   const gs = read('apps-script/Code.gs');
   assert.ok(gs.includes('Calendar.Events.insert'), 'Apps Script insert sự kiện');
   assert.ok(gs.includes('Calendar.Events.patch'), '409 thì patch cùng ID');
@@ -366,6 +368,12 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(
     gs.includes("CALENDAR_NAME = 'Blackboard Deadlines'"),
     'tên lịch đúng'
+  );
+  assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
+  assert.ok(gs.includes('window.opener.postMessage'), 'gửi kết quả về trang sync');
+  assert.ok(
+    read('README.md').includes('Execute as: User'),
+    'README hướng dẫn Execute as: User để ghi vào lịch riêng từng người'
   );
 });
 

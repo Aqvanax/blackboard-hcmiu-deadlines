@@ -1,11 +1,13 @@
-// Trang sync Giai đoạn 2: ghi deadline vào Google Calendar qua Apps Script relay.
-// Nhận sự kiện từ userscript qua postMessage, gửi resource đã dựng tới Apps Script.
+// Trang sync Giai đoạn 2: ghi deadline vào Google Calendar của CHÍNH NGƯỜI DÙNG.
+// Nhận sự kiện từ userscript qua postMessage, mở popup form POST sang Apps Script
+// (điều hướng thật nên mang được cookie Google, thứ fetch CORS không làm được).
 (function () {
   'use strict';
 
   /* Cấu hình */
 
-  // URL Apps Script web app (Deploy => New deployment => Web app), đổi rồi reload trang.
+  // URL Apps Script web app (Deploy => New deployment => Web app,
+  // Execute as: User accessing, Who has access: Anyone), đổi rồi reload trang.
   const RELAY_URL = 'https://script.google.com/macros/s/YOUR_DEPLOY_ID/exec';
   // Chỉ cần điền nếu người vận hành đặt Script Property "token" trong Apps Script.
   const RELAY_TOKEN = '';
@@ -13,11 +15,16 @@
   /** Chỉ nhận postMessage từ trang Blackboard của trường. */
   const ALLOWED_ORIGIN = 'https://blackboard.hcmiu.edu.vn';
 
+  const RELAY_ORIGIN = new URL(RELAY_URL).origin;
+
   const core = window.createBbCore();
   const messages = core.messages;
 
   let upcomingEvents = []; // đã validate và lọc chưa qua hạn
   let syncing = false;
+  let relayPopup = null;
+  let relayNonce = null;
+  let relayTimer = null;
 
   const $ = (id) => document.getElementById(id);
 
@@ -100,50 +107,77 @@
     receiveEvents(data.events);
   });
 
-  /* Gửi sang Apps Script relay */
+  /* Nhận kết quả từ popup Apps Script */
 
-  async function callRelay(resources) {
-    const res = await fetch(RELAY_URL, {
-      method: 'POST',
-      // text/plain để Apps Script trả JSON qua CORS, không cần preflight
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        type: 'bbhcmiu-sync',
-        token: RELAY_TOKEN,
-        events: resources
-      })
+  window.addEventListener('message', function (event) {
+    if (event.origin !== RELAY_ORIGIN) return;
+    if (!relayPopup || event.source !== relayPopup) return;
+    const data = event.data;
+    if (!data || typeof data !== 'object') return;
+    if (data.type !== 'bbhcmiu-result') return;
+    if (!relayNonce || data.nonce !== relayNonce) return;
+    relayNonce = null;
+    clearTimeout(relayTimer);
+    showSummary(data.created || 0, data.updated || 0, data.failed || 0, data.errors || []);
+  });
+
+  /* Gửi sang Apps Script relay qua popup form POST */
+
+  function randomNonce() {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function openRelay(resources) {
+    relayNonce = randomNonce();
+    const payload = JSON.stringify({
+      type: 'bbhcmiu-sync',
+      nonce: relayNonce,
+      token: RELAY_TOKEN,
+      origin: location.origin,
+      events: resources
     });
-    return res.json();
+    relayPopup = window.open('', 'bbhcmiu-relay', 'width=560,height=680');
+    if (!relayPopup) return false;
+    relayPopup.document.write(
+      '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">' +
+        '<title>Đồng bộ Google Calendar</title></head><body>' +
+        '<form method="POST" action="' +
+        RELAY_URL +
+        '"><input type="hidden" name="payload" value="' +
+        payload.replace(/"/g, '&quot;') +
+        '"></form>' +
+        '<script>document.forms[0].submit();</' +
+        'script></body></html>'
+    );
+    relayPopup.document.close();
+    return true;
   }
 
   async function runSync() {
-    $('result').textContent = 'Đang đồng bộ…';
-    $('error-list').textContent = '';
     const resources = upcomingEvents.map(core.buildGoogleEvent);
+    $('error-list').textContent = '';
 
-    let data;
-    try {
-      data = await callRelay(resources);
-    } catch (err) {
+    if (!openRelay(resources)) {
       $('result').textContent =
-        'Không gọi được Apps Script, kiểm tra RELAY_URL và trạng thái deploy.';
-      setStatus('Đồng bộ chưa hoàn tất.', 'error');
+        'Trình duyệt chặn cửa sổ bật lên, hãy cho phép popup cho trang này rồi thử lại.';
       return;
     }
-    if (!data || data.ok !== true) {
-      const msg = data && data.error ? data.error : 'phản hồi không hợp lệ';
-      $('result').textContent = 'Lỗi: ' + msg;
-      postToOpener({
-        type: 'bbhcmiu-result',
-        created: 0,
-        updated: 0,
-        failed: 0,
-        error: msg
-      });
-      return;
-    }
-
-    showSummary(data.created || 0, data.updated || 0, data.failed || 0, data.errors || []);
+    $('result').textContent =
+      'Đang mở cửa sổ đồng bộ… Lần đầu Google sẽ hỏi bạn ủy quyền 1 lần.';
+    clearTimeout(relayTimer);
+    relayTimer = setTimeout(function () {
+      if (!relayNonce) return;
+      $('result').textContent =
+        'Chưa nhận được kết quả. Nếu cửa sổ mở ra yêu cầu đăng nhập hoặc Allow, hoàn tất rồi bấm Đồng bộ lại. ';
+      const link = document.createElement('a');
+      link.href = RELAY_URL;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Mở trang ủy quyền';
+      $('result').appendChild(link);
+    }, 12000);
   }
 
   function showSummary(created, updated, failed, errors) {
@@ -163,11 +197,6 @@
       li.textContent = line;
       ul.appendChild(li);
     });
-    if (errors.length > 5) {
-      const li = document.createElement('li');
-      li.textContent = '…và ' + (errors.length - 5) + ' lỗi khác.';
-      ul.appendChild(li);
-    }
 
     /* Báo lại cho userscript hiển thị kết quả trên Blackboard. */
     postToOpener({
