@@ -9,7 +9,7 @@
   // URL Apps Script web app (Deploy => New deployment => Web app,
   // Execute as: User accessing, Who has access: Anyone), đổi rồi reload trang.
   const RELAY_URL =
-    'https://script.google.com/macros/s/AKfycbyZLtzjrpafWN5yk8GfCrkjgo_Bp7rbv20Y1nQKAvopydqdCJDxT65OzAxxDdeOGoea/exec';
+    'https://script.google.com/macros/s/AKfycbwUYLm7vSCPJ6ztsWEZ9Z-Dl-Q7GzWe_cX89-MTs7qdaTt_fFzj7WNBfgMF6UigSM--/exec';
   // Chỉ cần điền nếu người vận hành đặt Script Property "token" trong Apps Script.
   const RELAY_TOKEN = '';
 
