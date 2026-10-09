@@ -362,8 +362,14 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(src.includes('name="payload"'), 'gửi qua form POST để mang cookie Google');
   assert.ok(src.includes('relayNonce'), 'có nonce chống giả mạo postMessage');
   const gs = read('apps-script/Code.gs');
-  assert.ok(gs.includes('Calendar.Events.insert'), 'Apps Script insert sự kiện');
-  assert.ok(gs.includes('Calendar.Events.patch'), '409 thì patch cùng ID');
+  assert.ok(
+    gs.includes('Calendar.Events.insert(ev, calendarId)'),
+    'insert đúng thứ tự: resource trước, calendarId sau'
+  );
+  assert.ok(
+    gs.includes('Calendar.Events.patch(ev, calendarId, ev.id)'),
+    '409 thì patch, đúng thứ tự đối số'
+  );
   assert.ok(gs.includes('getCalendarsByName'), 'tìm hoặc tạo lịch Blackboard Deadlines');
   assert.ok(
     gs.includes("CALENDAR_NAME = 'Blackboard Deadlines'"),

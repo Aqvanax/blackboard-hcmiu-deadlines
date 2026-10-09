@@ -68,15 +68,16 @@ function syncEvents_(events) {
 }
 
 // Insert, nếu 409 thì patch cùng ID, chạy lại không nhân đôi.
+// Advanced Calendar Service lấy resource đứng trước, calendarId đứng sau.
 function upsertOne_(calendarId, ev) {
   try {
-    Calendar.Events.insert(calendarId, ev);
+    Calendar.Events.insert(ev, calendarId);
     return 'created';
   } catch (err) {
     var code = status_(err);
     if (code === 409) {
       try {
-        Calendar.Events.patch(calendarId, ev.id, ev);
+        Calendar.Events.patch(ev, calendarId, ev.id);
         return 'updated';
       } catch (err2) {
         return errText_(err2);
