@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đồng bộ Google Calendar: Blackboard HCMIU</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px;
+      background: #f3f4f6;
+      color: #111827;
+      font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    .card {
+      width: 100%;
+      max-width: 640px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    h2 { margin: 24px 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+    .sub { margin: 0 0 8px; color: #6b7280; font-size: 13px; }
+    .status {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      font-size: 14px;
+    }
+    .status.error { background: #fef2f2; border-left-color: #dc2626; }
+    .status.ok { background: #f0fdf4; border-left-color: #16a34a; }
+    .list { margin: 10px 0 0; padding-left: 20px; font-size: 14px; }
+    .list li { margin: 4px 0; }
+    .list .time { color: #6b7280; }
+    button.primary {
+      margin-top: 4px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      background: #1a73e8;
+      color: #fff;
+      font: 600 14px/1.2 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    button.primary:hover:not(:disabled) { background: #1765cc; }
+    button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .result { margin: 12px 0 0; font-weight: 600; min-height: 1.2em; }
+    .errors { margin: 8px 0 0; padding-left: 20px; color: #b91c1c; font-size: 13px; }
+    footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12.5px; }
+    footer p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Đồng bộ Google Calendar</h1>
+    <p class="sub">
+      Trang tĩnh (GitHub Pages) cho Giai đoạn 2, không có server của tác giả.
+      Dữ liệu chỉ đi giữa Blackboard → trình duyệt của bạn → Google.
+    </p>
+
+    <h2>1. Deadline nhận từ Blackboard</h2>
+    <p id="status" class="status">Đang chờ userscript Blackboard gửi dữ liệu…</p>
+    <ul id="event-list" class="list"></ul>
+
+    <h2>2. Đồng bộ vào lịch “Blackboard Deadlines”</h2>
+    <button id="sync-btn" class="primary" type="button" disabled>
+      Đăng nhập Google và đồng bộ
+    </button>
+    <p id="result" class="result"></p>
+    <ul id="error-list" class="errors"></ul>
+
+    <footer>
+      <p>
+        Quyền yêu cầu: <code>calendar.app.created</code>, chỉ tạo/sửa sự kiện trong
+        lịch do chính ứng dụng này tạo. Thu hồi quyền bất cứ lúc nào trong tài khoản Google.
+      </p>
+      <p>Đọc mã nguồn &amp; README trước khi dùng. Dự án cá nhân, không liên kết với Blackboard hay nhà trường.</p>
+    </footer>
+  </main>
+
+  <!-- Thư viện đăng nhập Google (Google Identity Services, luồng token) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Hàm thuần: lọc giờ, dựng ID/nội dung sự kiện (bản sao của src/core.js) -->
+  <script src="./core.js"></script>
+  <script src="./sync.js" defer></script>
+</body>
+</html>

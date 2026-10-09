@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="520" viewBox="0 0 720 520" font-family="system-ui, -apple-system, Segoe UI, sans-serif">
+  <!-- Ảnh minh họa GIẢ: trang sync với dữ liệu mẫu -->
+  <rect width="720" height="520" fill="#f3f4f6"/>
+  <rect x="40" y="28" width="640" height="464" rx="12" fill="#ffffff" stroke="#e5e7eb"/>
+
+  <text x="68" y="72" font-size="22" font-weight="700" fill="#111827">Đồng bộ Google Calendar</text>
+  <text x="68" y="96" font-size="13" fill="#6b7280">Trang tĩnh (GitHub Pages), không có server của tác giả. Dữ liệu mẫu.</text>
+
+  <text x="68" y="136" font-size="12" font-weight="700" fill="#6b7280" letter-spacing="0.5">1. DEADLINE NHẬN TỪ BLACKBOARD</text>
+  <rect x="68" y="148" width="584" height="40" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="0.5"/>
+  <rect x="68" y="148" width="4" height="40" fill="#16a34a"/>
+  <text x="84" y="173" font-size="14" fill="#111827">Đã nhận 3 deadline chưa qua hạn.</text>
+
+  <g font-size="14" fill="#111827">
+    <text x="80" y="216">• [IT138IU] Lab 02 Homework (deadline)</text>
+    <text x="600" y="216" font-size="13" fill="#6b7280">23:59 12/10/2026</text>
+    <text x="80" y="244">• [VX2011] Kiểm tra giữa kỳ (deadline)</text>
+    <text x="600" y="244" font-size="13" fill="#6b7280">23:59 15/10/2026</text>
+    <text x="80" y="272">• [IT3080] Nộp báo cáo nhóm (deadline)</text>
+    <text x="600" y="272" font-size="13" fill="#6b7280">23:59 20/10/2026</text>
+  </g>
+
+  <text x="68" y="318" font-size="12" font-weight="700" fill="#6b7280" letter-spacing="0.5">2. ĐỒNG BỘ VÀO LỊCH “BLACKBOARD DEADLINES”</text>
+  <rect x="68" y="332" width="252" height="42" rx="8" fill="#1a73e8"/>
+  <text x="194" y="358" font-size="14" font-weight="600" fill="#ffffff" text-anchor="middle">Đăng nhập Google và đồng bộ</text>
+
+  <text x="68" y="408" font-size="15" font-weight="700" fill="#111827">Đồng bộ xong: tạo mới 3, cập nhật 0.</text>
+
+  <line x1="68" y1="432" x2="652" y2="432" stroke="#e5e7eb"/>
+  <text x="68" y="454" font-size="12" fill="#6b7280">Quyền yêu cầu: calendar.app.created, chỉ ghi vào lịch do ứng dụng này tạo.</text>
+  <text x="68" y="474" font-size="12" fill="#6b7280">Thu hồi quyền bất cứ lúc nào trong tài khoản Google.</text>
+</svg>
