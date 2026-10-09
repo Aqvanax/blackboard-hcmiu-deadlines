@@ -60,6 +60,7 @@ function syncEvents_(events) {
     else {
       failed++;
       errors.push((ev.summary || ev.id) + ': ' + r);
+      console.error('bbhcmiu: ' + (ev.summary || ev.id) + ': ' + r);
     }
   });
 

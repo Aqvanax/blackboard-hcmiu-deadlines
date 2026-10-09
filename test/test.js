@@ -380,6 +380,10 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'trang sync đọc kết quả từ query cầu nối'
   );
   assert.ok(
+    gs.includes('console.error'),
+    'ghi log lỗi từng sự kiện, xem được ở Apps Script Executions'
+  );
+  assert.ok(
     read('README.md').includes('Execute as: User'),
     'README hướng dẫn Execute as: User để ghi vào lịch riêng từng người'
   );
