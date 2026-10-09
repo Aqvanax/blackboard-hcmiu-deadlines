@@ -115,36 +115,55 @@ function errText_(err) {
   return String(err && err.message ? err.message : err);
 }
 
-// Trang kết quả: hiện thống kê rồi tự postMessage về trang sync và tự đóng.
+// Trang kết quả: hiện thống kê và danh sách lỗi, rồi điều hướng popup về trang
+// sync (cùng nguồn) để postMessage kết quả về Blackboard rồi popup tự đóng.
 function htmlResult_(result, payload) {
+  var data = {
+    type: 'bbhcmiu-result',
+    nonce: String(payload.nonce || ''),
+    created: result.created || 0,
+    updated: result.updated || 0,
+    failed: result.failed || 0,
+    errors: (result.errors || []).slice(0, 8),
+    error: result.ok ? '' : String(result.error || '')
+  };
   var text = result.ok
     ? 'Đồng bộ xong: tạo mới ' +
-      (result.created || 0) +
+      data.created +
       ', cập nhật ' +
-      (result.updated || 0) +
-      ((result.failed || 0) > 0 ? ', lỗi ' + result.failed : '') +
+      data.updated +
+      (data.failed > 0 ? ', lỗi ' + data.failed : '') +
       '.'
-    : 'Lỗi: ' + result.error;
-  var msg =
-    '{"type":"bbhcmiu-result","nonce":' +
-    JSON.stringify(String(payload.nonce || '')) +
-    ',"created":' +
-    (result.created || 0) +
-    ',"updated":' +
-    (result.updated || 0) +
-    ',"failed":' +
-    (result.failed || 0) +
-    ',"errors":' +
-    JSON.stringify((result.errors || []).slice(0, 5)) +
-    (result.error ? ',"error":' + JSON.stringify(String(result.error)) : '') +
-    '}';
+    : 'Lỗi: ' + data.error;
+  var list = '';
+  data.errors.forEach(function (line) {
+    list += '<br>' + escapeHtml_(line);
+  });
+  // HtmlService luôn chạy trong iframe nên window.opener null: điều hướng
+  // popup về trang sync (cùng nguồn) thì postMessage và tự đóng mới chạy được.
+  var base = String(payload.syncUrl || '');
+  var bridge =
+    base +
+    (base.indexOf('?') > 0 ? '&' : '?') +
+    'bbhcmiuResult=' +
+    encodeURIComponent(JSON.stringify(data));
   var script =
-    '<script>try{window.opener.postMessage(' +
-    msg +
-    ',' +
-    JSON.stringify(String(payload.origin || '')) +
-    ');}catch(e){};setTimeout(function(){window.close();},1200);</' + 'script>';
-  return html_('Kết quả', text + script);
+    '<script>setTimeout(function(){try{window.top.location.href=' +
+    JSON.stringify(bridge) +
+    ';}catch(e){window.location.href=' +
+    JSON.stringify(bridge) +
+    ';}},300);</' + 'script>';
+  return html_(
+    'Kết quả',
+    text + (list ? '<p style="font-size:13px">' + list + '</p>' : '') + script
+  );
+}
+
+function escapeHtml_(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function html_(title, body) {

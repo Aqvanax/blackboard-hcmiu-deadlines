@@ -370,7 +370,15 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'tên lịch đúng'
   );
   assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
-  assert.ok(gs.includes('window.opener.postMessage'), 'gửi kết quả về trang sync');
+  assert.ok(gs.includes('bbhcmiuResult'), 'trả kết quả qua cầu nối bbhcmiuResult');
+  assert.ok(
+    gs.includes('window.top.location'),
+    'điều hướng popup về trang sync (iframe HtmlService không có opener)'
+  );
+  assert.ok(
+    src.includes("get('bbhcmiuResult')"),
+    'trang sync đọc kết quả từ query cầu nối'
+  );
   assert.ok(
     read('README.md').includes('Execute as: User'),
     'README hướng dẫn Execute as: User để ghi vào lịch riêng từng người'

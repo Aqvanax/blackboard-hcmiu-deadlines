@@ -111,7 +111,9 @@
   /* Nhận kết quả từ popup Apps Script */
 
   window.addEventListener('message', function (event) {
-    if (event.origin !== RELAY_ORIGIN) return;
+    // Kết quả tới từ cầu nối (popup điều hướng về trang sync, cùng nguồn),
+    // còn relay origin giữ lại cho trường hợp HtmlService không iframe.
+    if (event.origin !== RELAY_ORIGIN && event.origin !== location.origin) return;
     if (!relayPopup || event.source !== relayPopup) return;
     const data = event.data;
     if (!data || typeof data !== 'object') return;
@@ -137,6 +139,7 @@
       nonce: relayNonce,
       token: RELAY_TOKEN,
       origin: location.origin,
+      syncUrl: location.origin + location.pathname,
       events: resources
     });
     relayPopup = window.open('', 'bbhcmiu-relay', 'width=560,height=680');
@@ -231,5 +234,25 @@
     }
   });
 
-  startHandshake();
+  /* Cầu nối: popup được điều hướng về trang này, kết quả nằm trong query. */
+  function consumeBridgeResult() {
+    const raw = new URLSearchParams(location.search).get('bbhcmiuResult');
+    if (!raw) return false;
+    history.replaceState(null, '', location.pathname);
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (err) {
+      return false;
+    }
+    if (!data || data.type !== 'bbhcmiu-result') return false;
+    if (!window.opener || window.opener.closed) return false;
+    window.opener.postMessage(data, location.origin);
+    setTimeout(function () {
+      window.close();
+    }, 400);
+    return true;
+  }
+
+  if (!consumeBridgeResult()) startHandshake();
 })();
