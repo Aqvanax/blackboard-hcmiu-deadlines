@@ -10,13 +10,14 @@
 
 ### 1. What it does
 
-A userscript (Tampermonkey/Violentmonkey) for the Blackboard Learn calendar at HCMIU.
-Press a button and it collects your **upcoming deadlines** (past ones are never
-exported) and either:
+A small script for the Blackboard Learn calendar at HCMIU — run it with Tampermonkey,
+a bookmarklet, or as a plain browser extension. Press a button and it collects your
+**upcoming deadlines** (past ones are never exported) and either:
 
 - **Phase 1 (required):** downloads an `.ics` file you import into Google Calendar, or
-- **Phase 2 (optional):** writes them straight into a private Google Calendar named
-  **"Blackboard Deadlines"** through a static page on GitHub Pages — no manual import.
+- **Phase 2 (optional):** writes them straight into a Google Calendar named
+  **"Blackboard Deadlines"** through a static page plus an Apps Script relay — no
+  manual import, and **no Google setup at all** for the people using it.
 
 Everything runs in **your browser**. There is no author server, no analytics, and no
 data collection. The script only reads deadlines for the next 180 days (configurable)
@@ -26,12 +27,35 @@ and filters out anything already past its end time.
 
 ### 2. Install
 
+Pick one option — all three run the same code:
+
+**Option 1 — Tampermonkey (easiest to update)**
+
 1. Install [Tampermonkey](https://www.tampermonkey.net/) (or Violentmonkey).
-2. Install the script: open [`blackboard-deadlines.user.js`](./blackboard-deadlines.user.js)
-   in this repo, view the **Raw** file, and confirm the install in Tampermonkey.
-   - Building from source (optional): `node build.js` — no npm dependencies.
-3. Phase 2 additionally needs a hosted sync page and a Google Client ID — see
-   [Usage B](#3-usage). Phase 1 needs none of that.
+2. Open [`blackboard-deadlines.user.js`](./blackboard-deadlines.user.js) in this repo,
+   view the **Raw** file, and confirm the install.
+
+**Option 2 — Bookmarklet (nothing to install)**
+
+1. Create a new browser bookmark and paste the `javascript:...` line from
+   [`bookmarklet/bookmarklet.js`](./bookmarklet/bookmarklet.js) into its URL field
+   (first change the placeholder to the URL where you host the script).
+2. On the Blackboard calendar page, click the bookmark — the buttons appear.
+   - If nothing happens, the Blackboard page's CSP may block injected scripts; use
+     option 1 or 3 instead.
+
+**Option 3 — Browser extension (no Tampermonkey)**
+
+1. Build once: `node build.js` (this also generates `extension/bb.js`).
+2. Load it: Chrome/Edge → `chrome://extensions` → Developer mode → **Load unpacked**
+   → pick the [`extension/`](./extension/) folder; Firefox → `about:debugging` →
+   **Load Temporary Add-on** → pick `manifest.json`.
+3. To distribute to everyone: submit the `extension/` folder to the Chrome Web Store
+   or Firefox Add-ons. The manifest requests **no extra permissions**.
+
+Building from source (optional): `node build.js` — no npm dependencies.
+Phase 2 additionally needs the one-time relay setup in [Usage B](#3-usage);
+Phase 1 needs none of that.
 
 ### 3. Usage
 
@@ -53,41 +77,48 @@ them (fixed UID per Blackboard item).
 
 #### B — Direct Google Calendar sync (Phase 2, optional)
 
-Do this only after Phase 1 works for you. One-time setup:
+One person (the *operator*) sets this up once; everyone else just presses the button.
+Both Apps Script and GitHub Pages are free.
 
-1. **Host the sync page.** Publish this repo on GitHub Pages
-   (*Settings → Pages → Deploy from a branch → `main` / root*). Your page will be
+1. **Deploy the relay.** Open <https://script.new> (logged in with the Google account
+   that should own the calendar) and paste [`apps-script/Code.gs`](./apps-script/Code.gs),
+   **Save**, then *Deploy → New deployment → **Web app***:
+   - **Execute as: Me**, **Who has access: Anyone** → **Deploy** → copy the URL
+     ending in `/exec`.
+2. **Host the sync page.** Publish this repo on GitHub Pages
+   (*Settings → Pages → Deploy from a branch → `main` / root*), giving you
    `https://<your-user>.github.io/<repo>/sync/`.
-2. **Create a Google Client ID.** In [Google Cloud Console](https://console.cloud.google.com/):
-   create a project → enable **Google Calendar API** → *OAuth consent screen*
-   (External, add your Google account as a test user) → *Credentials → Create
-   Credentials → OAuth client ID → **Web application*** → add the sync URL from
-   step 1 to **Authorized JavaScript origins** → copy the Client ID.
-   Only a Client ID is used (token flow, no client secret — never commit one).
 3. **Configure, build, install.**
-   - Open the sync page and paste your Client ID the first time it asks (stored only in your browser).
+   - Set `RELAY_URL` in [`sync/sync.js`](./sync/sync.js) to the `/exec` URL from step 1.
    - Set `BB_CONFIG.SYNC_PAGE_URL` in [`src/userscript.body.js`](./src/userscript.body.js)
-     to your sync URL, then run `node build.js` and reinstall the userscript.
-4. **Use it.** On the Blackboard calendar click **"Đồng bộ Google Calendar"** →
-   log in to Google → grant the permission → the page lists your upcoming deadlines
-   and writes them to the **"Blackboard Deadlines"** calendar. Results
-   (*created / updated / failed*) are shown on the sync page and back on Blackboard.
+     to your sync URL, run `node build.js`, then reinstall/reload whichever option you
+     picked in §2.
+4. **Share the calendar with the class.** Synced deadlines land in the operator's
+   **"Blackboard Deadlines"** calendar (created automatically on first sync). In Google
+   Calendar: *calendar menu → Settings and sharing → Access permissions* → share by
+   email or create a public read-only link so everyone can add it to their own calendar.
+5. **Use it.** On the Blackboard calendar click **"Đồng bộ Google Calendar"** → the
+   page lists upcoming deadlines → press **"Đồng bộ vào Google Calendar"**. No Google
+   login popup at all. Results (*created / updated / failed*) show on the sync page and
+   back on Blackboard as a toast.
 
 ![Mock screenshot: sync page with fake deadlines](docs/screenshot-sync.svg)
 
 Notes:
 
-- **Scope:** the page asks only for
-  `https://www.googleapis.com/auth/calendar.app.created` — checked against Google's
-  scope list: *"Make secondary Google calendars, and see, create, change, and delete
-  events on them"*. It cannot touch your existing calendars; no broader scope is used.
-- Because that narrow scope cannot list calendars, the sync page remembers the id of
-  the calendar it created in your browser's `localStorage` (nothing else is stored).
-  If you clear site data, a second calendar with the same name may be created — delete
-  the extra one in Google Calendar.
-- **OAuth testing mode:** an unverified app in *Testing* allows **at most 100 test
-  users** added manually; wider use requires Google's verification process. Users who
-  can't use Phase 2 can still fully use Phase 1.
+- Because the relay runs as the operator (*Execute as: Me*), users grant **nothing**:
+  no Client ID, no consent screen, **no 100-test-user limit**, no OAuth verification.
+- **Re-running is safe:** every event keeps a fixed ID, so syncing again updates
+  instead of duplicating (insert → 409 → patch happens inside the script). Nothing is
+  ever deleted automatically.
+- **Optional abuse guard:** set a Script Property `token` in Apps Script (*Project
+  Settings → Script properties*) and put the same value into `RELAY_TOKEN` in
+  [`sync/sync.js`](./sync/sync.js). Without it, anyone who finds the `/exec` URL can
+  push events into the shared calendar (harmless, but noisy).
+- *Execute as: User* would write into each user's own calendar instead, but requires
+  every user to authorize the script directly (browsers block the cross-origin cookie
+  handshake), so it is **not** recommended.
+- Anyone who cannot or does not want to use Phase 2 still fully has Phase 1.
 
 ### 4. Limitations
 
@@ -102,30 +133,27 @@ Notes:
   entries first.
 - **Nothing is ever deleted automatically.** If a deadline is deleted or its time is
   changed on Blackboard, the copy in Google Calendar stays until you remove or
-  re-import it. Re-importing / re-syncing updates times but does not delete events
-  that vanished from Blackboard.
+  re-sync it. Re-syncing updates times but does not delete vanished events.
 - The `.ics` `SEQUENCE` field is set to the current minute so a later import looks
   "newer" than an earlier one. **Not verified** that Google Calendar uses it to update
   existing entries — if duplicates appear, delete the old ones and import again.
 - Phase 2 pop-up windows may be blocked by the browser — allow pop-ups for Blackboard.
-- Google may require an OAuth verification review before the sync page can be used
-  by people outside your test list.
+- Phase 2 sends deadline titles and times to the operator's Apps Script endpoint; the
+  `/exec` URL is effectively public — use the optional token if that bothers you.
 
 ### 5. Privacy & Security
 
 - **Everything runs in your browser.** No author server, no data collection, no
   tracking, no cookies set by this project.
 - The script calls only: `blackboard.hcmiu.edu.vn` (same-origin `fetch` with
-  `credentials: 'same-origin'`), `accounts.google.com`, `www.googleapis.com`, and your
-  sync page. It never uses `GM_xmlhttpRequest`.
-- It **never reads cookies, never stores passwords, tokens or your Blackboard
-  account.** The Google access token lives in memory only; the sync page stores only
-  the id of the calendar it created.
+  `credentials: 'same-origin'`) and your sync page; only the sync page then calls
+  `script.google.com` (the relay). It never uses `GM_xmlhttpRequest`.
+- **No accounts, no tokens, no stored credentials anywhere.** Phase 2 needs no Google
+  login in your browser at all: the page posts deadline data to the relay, and the
+  relay writes it into the operator's calendar with the operator's own authorization.
 - Phase 2 exchanges data with `postMessage`: **both sides verify `event.origin`**
   (and the sending window), validate the message schema, never use `targetOrigin "*"`,
   and never put event data in a URL.
-- Phase 2: Google issues the token **to your own browser session**. You can revoke it
-  anytime under *Google Account → Security → Third-party access*.
 - **Read the source before installing**, and never share your personal Blackboard
   `.ics` feed link — it contains your schedule.
 
@@ -138,12 +166,13 @@ working when the university changes its Blackboard setup.
 ### 7. Contributing & License
 
 - **MIT** — see [LICENSE](./LICENSE). Issues and pull requests are welcome.
-- Development: `node build.js` regenerates the userscript; `npm test`
-  (or `node build.js && node test/test.js`) runs the Node test suite — plain Node ≥ 18,
-  **no dependencies, no test framework**.
+- Development: `node build.js` regenerates the userscript and `extension/bb.js`;
+  `npm test` (or `node build.js && node test/test.js`) runs the Node test suite —
+  plain Node ≥ 18, **no dependencies, no test framework**.
 - Layout: `src/core.js` (pure functions: filtering, time zones, escaping, line
   folding, ICS/Google payloads), `src/userscript.body.js` (DOM/fetch thin layer),
-  `sync/` (Phase 2 page), `test/test.js` (fake data only), `build.js` (concatenation).
+  `sync/` (Phase 2 page), `apps-script/` (Phase 2 relay), `extension/` (MV3 wrapper),
+  `bookmarklet/`, `test/test.js` (fake data only), `build.js` (concatenation).
 
 [↑ Top](#top) · [Tiếng Việt](#tiếng-việt)
 
@@ -153,13 +182,15 @@ working when the university changes its Blackboard setup.
 
 ### 1. Tool làm gì
 
-Userscript (Tampermonkey/Violentmonkey) cho trang Calendar của Blackboard Learn trường
-HCMIU. Bấm một nút, script lấy các deadline **chưa qua hạn** (deadline đã qua không bao
-giờ được xuất) rồi:
+Script nhỏ cho trang Calendar của Blackboard Learn trường HCMIU — chạy bằng
+Tampermonkey, bookmarklet, hoặc cài như extension trình duyệt bình thường. Bấm một
+nút, script lấy các deadline **chưa qua hạn** (deadline đã qua không bao giờ được
+xuất) rồi:
 
 - **Giai đoạn 1 (bắt buộc):** tải file `.ics` để bạn import vào Google Calendar, hoặc
-- **Giai đoạn 2 (tùy chọn):** ghi thẳng vào lịch riêng **"Blackboard Deadlines"**
-  thông qua trang tĩnh trên GitHub Pages — không cần import thủ công.
+- **Giai đoạn 2 (tùy chọn):** ghi thẳng vào lịch **"Blackboard Deadlines"** thông qua
+  trang tĩnh cộng một Apps Script relay — không cần import thủ công, và **không cần
+  cài đặt gì về Google** cho người dùng.
 
 Mọi thứ chạy trong **trình duyệt của bạn**. Không có server của tác giả, không có
 analytics, không thu thập dữ liệu. Script chỉ đọc cửa sổ 180 ngày tới (đổi được) và
@@ -169,12 +200,35 @@ lọc mọi sự kiện đã qua hạn.
 
 ### 2. Cài đặt
 
+Chọn 1 trong 3 cách — cùng một mã nguồn:
+
+**Cách 1 — Tampermonkey (dễ cập nhật nhất)**
+
 1. Cài [Tampermonkey](https://www.tampermonkey.net/) (hoặc Violentmonkey).
-2. Cài script: mở [`blackboard-deadlines.user.js`](./blackboard-deadlines.user.js)
-   trong repo, xem file **Raw**, rồi xác nhận cài trong Tampermonkey.
-   - Tự build từ nguồn (không bắt buộc): `node build.js` — không cần npm dependency.
-3. Giai đoạn 2 cần thêm trang sync được hosted và Google Client ID — xem
-   [Cách dùng B](#3-cách-dùng). Giai đoạn 1 không cần gì thêm.
+2. Mở [`blackboard-deadlines.user.js`](./blackboard-deadlines.user.js) trong repo, xem
+   file **Raw**, rồi xác nhận cài.
+
+**Cách 2 — Bookmarklet (không cài gì)**
+
+1. Tạo bookmark mới và dán dòng `javascript:...` từ
+   [`bookmarklet/bookmarklet.js`](./bookmarklet/bookmarklet.js) vào trường URL
+   (đổi placeholder thành URL nơi bạn host script).
+2. Ở trang Calendar Blackboard, bấm bookmark đó là nút hiện ra.
+   - Nếu không có gì xảy ra, CSP của Blackboard có thể chặn inject script; dùng cách 1
+     hoặc cách 3.
+
+**Cách 3 — Extension trình duyệt (không cần Tampermonkey)**
+
+1. Build một lần: `node build.js` (tự sinh thêm `extension/bb.js`).
+2. Nạp extension: Chrome/Edge → `chrome://extensions` → Bật **Developer mode** →
+   **Load unpacked** → chọn thư mục [`extension/`](./extension/); Firefox →
+   `about:debugging` → **Load Temporary Add-on** → chọn `manifest.json`.
+3. Muốn chia sẻ cho mọi người: submit thư mục `extension/` lên Chrome Web Store hoặc
+   Firefox Add-ons. Manifest **không xin quyền thừa**.
+
+Tự build từ nguồn (không bắt buộc): `node build.js` — không cần npm dependency.
+Giai đoạn 2 cần thêm cấu hình relay một lần ở [Cách dùng B](#3-cách-dùng);
+Giai đoạn 1 không cần gì thêm.
 
 ### 3. Cách dùng
 
@@ -196,42 +250,46 @@ Import lại cùng file sau này sẽ **cập nhật** đúng các sự kiện c
 
 #### B — Đồng bộ thẳng vào Google Calendar (Giai đoạn 2, tùy chọn)
 
-Chỉ làm sau khi Giai đoạn 1 đã chạy ổn với bạn. Cấu hình một lần:
+Một người (gọi là *người vận hành*) cấu hình một lần; mọi người còn lại chỉ bấm nút.
+Apps Script và GitHub Pages đều miễn phí.
 
-1. **Đưa trang sync lên mạng.** Publish repo này bằng GitHub Pages
-   (*Settings → Pages → Deploy from a branch → `main` / root*). Trang của bạn là
+1. **Deploy relay.** Mở <https://script.new> (đăng nhập bằng tài khoản Google sẽ giữ
+   lịch), dán [`apps-script/Code.gs`](./apps-script/Code.gs), **Save**, rồi
+   *Deploy → New deployment → **Web app***:
+   - **Execute as: Me**, **Who has access: Anyone** → **Deploy** → copy URL kết thúc `/exec`.
+2. **Đưa trang sync lên mạng.** Publish repo này bằng GitHub Pages
+   (*Settings → Pages → Deploy from a branch → `main` / root*), ra
    `https://<user-của-bạn>.github.io/<repo>/sync/`.
-2. **Tạo Client ID của Google.** Trong [Google Cloud Console](https://console.cloud.google.com/):
-   tạo project → bật **Google Calendar API** → *OAuth consent screen* (External, thêm
-   tài khoản Google của bạn vào danh sách test user) → *Credentials → Create
-   Credentials → OAuth client ID → **Web application*** → thêm URL trang sync ở bước 1
-   vào **Authorized JavaScript origins** → copy Client ID.
-   Chỉ dùng Client ID (luồng token, **không** dùng client secret — tuyệt đối không
-   commit secret).
 3. **Cấu hình, build, cài lại.**
-   - Mở trang sync và dán Client ID khi được hỏi lần đầu (chỉ lưu trong trình duyệt của bạn).
+   - Đặt `RELAY_URL` trong [`sync/sync.js`](./sync/sync.js) thành URL `/exec` ở bước 1.
    - Đặt `BB_CONFIG.SYNC_PAGE_URL` trong [`src/userscript.body.js`](./src/userscript.body.js)
-     đúng URL trang sync, chạy `node build.js` rồi cài lại userscript.
-4. **Dùng.** Trên trang Calendar Blackboard bấm **"Đồng bộ Google Calendar"** → đăng
-   nhập Google → đồng ý quyền → trang liệt kê deadline chưa qua hạn và ghi vào lịch
-   **"Blackboard Deadlines"**. Kết quả (*tạo mới / cập nhật / lỗi*) hiện trên trang
+     đúng URL trang sync, chạy `node build.js`, rồi cài lại/nạp lại cách bạn đã chọn ở
+     mục 2.
+4. **Chia sẻ lịch cho cả lớp.** Deadline sau khi đồng bộ nằm trong lịch
+   **"Blackboard Deadlines"** của người vận hành (tự tạo ở lần đồng bộ đầu). Trên
+   Google Calendar: *menu lịch → Settings and sharing → Access permissions* → chia sẻ
+   theo email hoặc tạo link công khai chỉ-đọc để mọi người thêm vào lịch của họ.
+5. **Dùng.** Trên trang Calendar Blackboard bấm **"Đồng bộ Google Calendar"** → trang
+   liệt kê deadline chưa qua hạn → bấm **"Đồng bộ vào Google Calendar"**. Không có
+   popup đăng nhập Google nào. Kết quả (*tạo mới / cập nhật / lỗi*) hiện trên trang
    sync và quay lại hiện trên Blackboard.
 
 ![Ảnh minh họa (giả): trang sync với dữ liệu mẫu](docs/screenshot-sync.svg)
 
 Ghi chú:
 
-- **Scope:** trang chỉ xin quyền
-  `https://www.googleapis.com/auth/calendar.app.created` — đã kiểm tra trong danh sách
-  scope của Google: *"Make secondary Google calendars, and see, create, change, and
-  delete events on them"*. Quyền này **không với tới các lịch sẵn có** của bạn; không
-  dùng quyền rộng hơn.
-- Vì scope hẹp không cho liệt kê lịch, trang sync ghi **id của lịch đã tạo** vào
-  `localStorage` của trình duyệt (không lưu gì khác). Nếu bạn xóa dữ liệu site, một
-  lịch trùng tên có thể được tạo thêm — hãy xóa lịch thừa trong Google Calendar.
-- **Chế độ OAuth Testing:** app chưa xác minh ở chế độ *Testing* chỉ tối đa **100 test
-  user** thêm thủ công; dùng rộng hơn cần qua quy trình xác minh OAuth của Google.
-  Người chưa dùng được Giai đoạn 2 vẫn dùng được đầy đủ Giai đoạn 1.
+- Vì relay chạy bằng tài khoản người vận hành (*Execute as: Me*), người dùng
+  **không cấp quyền gì**: không Client ID, không màn hình đồng ý, **không giới hạn 100
+  test user**, không cần xác minh OAuth của Google.
+- **Đồng bộ lại an toàn:** mỗi sự kiện có ID cố định, chạy lại là cập nhật chứ không
+  nhân đôi (insert → 409 → patch nằm trong script). Không có gì bị tự xóa.
+- **Chống spam tùy chọn:** đặt Script Property `token` trong Apps Script (*Project
+  Settings → Script properties*) và điền cùng giá trị vào `RELAY_TOKEN` trong
+  [`sync/sync.js`](./sync/sync.js). Nếu không, ai lọt được URL `/exec` cũng đẩy được
+  sự kiện vào lịch chung (vô hại nhưng dễ nhiễu).
+- *Execute as: User* sẽ ghi vào lịch của từng người nhưng đòi mỗi người ủy quyền script
+  trực tiếp (trình duyệt chặn handshake cookie cross-origin) nên **không khuyến nghị**.
+- Ai không dùng Giai đoạn 2 vẫn dùng được đầy đủ Giai đoạn 1.
 
 ### 4. Giới hạn
 
@@ -243,30 +301,29 @@ Ghi chú:
 - Cách A là **bản chụp một lần**. Nếu trước đó bạn đã import cùng deadline theo cách
   khác (vd: feed của Blackboard) thì có thể bị trùng — xóa bản cũ trước khi import.
 - **Không tự xóa sự kiện:** deadline bị xóa hoặc đổi giờ trên Blackboard sẽ *không*
-  tự biến mất/cập nhật trên Google Calendar cho tới khi bạn import hoặc đồng bộ lại —
-  và dù đồng bộ lại, sự kiện biến mất khỏi Blackboard cũng không bị xóa ở Google.
+  tự biến mất/cập nhật trên Google Calendar cho tới khi bạn đồng bộ lại — và dù đồng
+  bộ lại, sự kiện biến mất khỏi Blackboard cũng không bị xóa ở Google.
 - `SEQUENCE` trong `.ics` lấy theo phút hiện tại để bản import sau "mới hơn" bản
   trước. **Chưa kiểm chứng** Google Calendar có dùng giá trị này để cập nhật sự kiện
   trùng UID hay không — nếu bị trùng, xóa bản cũ rồi import lại.
 - Trang sync bật cửa sổ mới — trình duyệt có thể chặn pop-up; hãy cho phép pop-up
   cho Blackboard.
-- Google có thể yêu cầu xác minh OAuth trước khi người ngoài danh sách test dùng
-  được trang sync.
+- Giai đoạn 2 gửi tiêu đề và giờ hạn nộp tới Apps Script endpoint của người vận hành;
+  URL `/exec` mặc nhiên công khai — dùng token tùy chọn nếu bạn thấy ngại.
 
 ### 5. Quyền riêng tư và bảo mật
 
 - **Mọi thứ chạy trong trình duyệt của bạn.** Không có server của tác giả, không thu
   thập dữ liệu, không analytics, dự án này không đặt cookie nào.
-- Script chỉ gọi các domain: `blackboard.hcmiu.edu.vn` (fetch cùng domain với
-  `credentials: 'same-origin'`), `accounts.google.com`, `www.googleapis.com` và trang
-  sync của bạn. Không dùng `GM_xmlhttpRequest`.
-- **Không đọc cookie, không lưu mật khẩu, không lưu token hay tài khoản Blackboard.**
-  Token Google chỉ nằm trong RAM; trang sync chỉ lưu id của lịch do chính nó tạo.
+- Script chỉ gọi: `blackboard.hcmiu.edu.vn` (fetch cùng domain với
+  `credentials: 'same-origin'`) và trang sync; chỉ trang sync gọi tiếp
+  `script.google.com` (relay). Không dùng `GM_xmlhttpRequest`.
+- **Không có tài khoản, không token, không lưu thông tin xác thực ở bất kỳ đâu.**
+  Giai đoạn 2 không cần đăng nhập Google trong trình duyệt: trang post dữ liệu deadline
+  tới relay, relay ghi vào lịch của người vận hành bằng ủy quyền của chính họ.
 - Giai đoạn 2 trao đổi dữ liệu qua `postMessage`: **cả hai phía đều kiểm tra
   `event.origin`** (và cửa sổ gửi), validate cấu trúc thông điệp, không dùng
   `targetOrigin "*"`, không đưa dữ liệu sự kiện lên URL.
-- Giai đoạn 2: Google cấp token cho **phiên trình duyệt của chính bạn**; bạn có thể
-  thu hồi quyền bất cứ lúc nào tại *Google Account → Security → Third-party access*.
 - **Khuyến khích đọc mã nguồn trước khi cài**, và không chia sẻ link feed `.ics` cá
   nhân của Blackboard — nó chứa lịch của chính bạn.
 
@@ -279,11 +336,12 @@ rủi ro. Tool có thể ngừng hoạt động khi trường thay đổi cấu 
 ### 7. Đóng góp và giấy phép
 
 - **MIT** — xem [LICENSE](./LICENSE). Issues và pull request đều hoan nghênh.
-- Phát triển: `node build.js` để tạo lại userscript; `npm test`
+- Phát triển: `node build.js` để tạo lại userscript và `extension/bb.js`; `npm test`
   (hoặc `node build.js && node test/test.js`) chạy test — Node ≥ 18 thuần,
   **không thư viện ngoài, không framework test**.
 - Cấu trúc: `src/core.js` (hàm thuần: lọc, múi giờ, escape, gập dòng, dựng ICS/nội
   dung Google), `src/userscript.body.js` (lớp mỏng DOM/fetch), `sync/` (trang Giai
-  đoạn 2), `test/test.js` (chỉ dữ liệu giả), `build.js` (ghép file).
+  đoạn 2), `apps-script/` (relay Giai đoạn 2), `extension/` (bọc MV3), `bookmarklet/`,
+  `test/test.js` (chỉ dữ liệu giả), `build.js` (ghép file).
 
 [↑ Top](#top) · [English](#english)

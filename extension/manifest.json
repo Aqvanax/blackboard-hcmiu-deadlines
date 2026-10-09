@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Blackboard HCMIU Deadlines",
+  "version": "1.0.0",
+  "description": "Xuất deadline Blackboard HCMIU ra file .ics và đồng bộ Google Calendar.",
+  "content_scripts": [
+    {
+      "matches": ["https://blackboard.hcmiu.edu.vn/webapps/calendar/*"],
+      "js": ["bb.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

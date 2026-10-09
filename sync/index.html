@@ -65,7 +65,7 @@
     <h1>Đồng bộ Google Calendar</h1>
     <p class="sub">
       Trang tĩnh (GitHub Pages) cho Giai đoạn 2, không có server của tác giả.
-      Dữ liệu chỉ đi giữa Blackboard → trình duyệt của bạn → Google.
+      Dữ liệu chỉ đi giữa Blackboard → trình duyệt của bạn → Apps Script → Google.
     </p>
 
     <h2>1. Deadline nhận từ Blackboard</h2>
@@ -74,22 +74,21 @@
 
     <h2>2. Đồng bộ vào lịch “Blackboard Deadlines”</h2>
     <button id="sync-btn" class="primary" type="button" disabled>
-      Đăng nhập Google và đồng bộ
+      Đồng bộ vào Google Calendar
     </button>
     <p id="result" class="result"></p>
     <ul id="error-list" class="errors"></ul>
 
     <footer>
       <p>
-        Quyền yêu cầu: <code>calendar.app.created</code>, chỉ tạo/sửa sự kiện trong
-        lịch do chính ứng dụng này tạo. Thu hồi quyền bất cứ lúc nào trong tài khoản Google.
+        Deadline được gửi tới Apps Script của người vận hành và ghi vào lịch
+        “Blackboard Deadlines”; người vận hành chia sẻ lịch đó cho cả lớp.
+        Không cần Client ID, không cần ủy quyền Google ở người dùng.
       </p>
       <p>Đọc mã nguồn &amp; README trước khi dùng. Dự án cá nhân, không liên kết với Blackboard hay nhà trường.</p>
     </footer>
   </main>
 
-  <!-- Thư viện đăng nhập Google (Google Identity Services, luồng token) -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Hàm thuần: lọc giờ, dựng ID/nội dung sự kiện (bản sao của src/core.js) -->
   <script src="./core.js"></script>
   <script src="./sync.js" defer></script>

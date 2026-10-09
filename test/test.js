@@ -310,16 +310,19 @@ test('Schema validation: thiếu trường sai kiểu bị loại', () => {
 console.log('Trang sync (Giai đoạn 2)');
 
 test('File sync không lỗi cú pháp, index.html trỏ đúng script', () => {
-  for (const f of ['sync/sync.js', 'sync/core.js', 'src/userscript.body.js']) {
+  for (const f of [
+    'sync/sync.js',
+    'sync/core.js',
+    'src/userscript.body.js',
+    'apps-script/Code.gs',
+    'extension/bb.js'
+  ]) {
     new vm.Script(read(f), { filename: f }); // ném lỗi nếu cú pháp sai
   }
   const html = read('sync/index.html');
   assert.ok(html.includes('<script src="./core.js">'), 'index.html phải nạp core.js');
   assert.ok(html.includes('<script src="./sync.js" defer>'), 'index.html phải nạp sync.js');
-  assert.ok(
-    html.includes('https://accounts.google.com/gsi/client'),
-    'phải nạp Google Identity Services từ accounts.google.com'
-  );
+  assert.ok(!html.includes('accounts.google.com'), 'không còn nạp Google Identity Services');
   assert.ok(!html.includes('client_secret'), 'không có client secret');
 });
 
@@ -347,26 +350,23 @@ test('Trang sync: kiểm tra origin hai chiều, schema, không dùng "*"', () =
   );
 });
 
-test('Giai đoạn 2: scope hẹp, Client ID đúng định dạng, upsert insert→409→update', () => {
+test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409→patch', () => {
   const src = read('sync/sync.js');
   assert.ok(
-    src.includes('https://www.googleapis.com/auth/calendar.app.created'),
-    'phải dùng scope calendar.app.created (đã kiểm tra trong tài liệu Google)'
+    src.includes('https://script.google.com/macros/s/'),
+    'trỏ tới Apps Script web app'
   );
-  assert.match(
-    src,
-    /'YOUR_CLIENT_ID\.apps\.googleusercontent\.com'/,
-    'CLIENT_ID mặc định phải là placeholder, ID thật mỗi người tự dán lúc chạy'
-  );
-  assert.ok(src.includes('res.status === 409'), 'phải xử lý 409 → update');
-  assert.ok(src.includes("'PUT'"), 'update bằng PUT');
-  assert.ok(src.includes('summary: SYNC_CALENDAR_NAME'), 'tạo lịch "Blackboard Deadlines"');
+  assert.ok(!src.includes('googleusercontent.com'), 'không còn Client ID OAuth');
+  assert.ok(src.includes("type: 'bbhcmiu-sync'"), 'gửi đúng loại thông điệp');
+  assert.ok(src.includes('core.buildGoogleEvent'), 'dựng resource bằng core');
+  const gs = read('apps-script/Code.gs');
+  assert.ok(gs.includes('Calendar.Events.insert'), 'Apps Script insert sự kiện');
+  assert.ok(gs.includes('Calendar.Events.patch'), '409 thì patch cùng ID');
+  assert.ok(gs.includes('getCalendarsByName'), 'tìm hoặc tạo lịch Blackboard Deadlines');
   assert.ok(
-    src.includes("const SYNC_CALENDAR_NAME = 'Blackboard Deadlines'"),
+    gs.includes("CALENDAR_NAME = 'Blackboard Deadlines'"),
     'tên lịch đúng'
   );
-  // token chỉ giữ trong RAM
-  assert.ok(!/localStorage\.setItem\([^)]*token/i.test(src), 'không lưu token vào localStorage');
 });
 
 console.log('File build & an ninh');
@@ -413,13 +413,34 @@ test('sync/core.js là bản sao đồng bộ của src/core.js', () => {
   assert.equal(read('sync/core.js'), read('src/core.js'));
 });
 
+test('Extension MV3: content script trang calendar, không xin quyền thừa', () => {
+  const manifest = JSON.parse(read('extension/manifest.json'));
+  assert.equal(manifest.manifest_version, 3);
+  assert.ok(
+    !manifest.permissions || manifest.permissions.length === 0,
+    'không xin quyền thừa'
+  );
+  const cs = manifest.content_scripts[0];
+  assert.ok(
+    cs.matches.includes('https://blackboard.hcmiu.edu.vn/webapps/calendar/*'),
+    'match đúng trang calendar'
+  );
+  assert.equal(cs.run_at, 'document_idle');
+  assert.equal(
+    read('extension/bb.js'),
+    read('blackboard-deadlines.user.js'),
+    'bb.js phải là file built'
+  );
+});
+
 test('Chỉ gọi các domain được phép', () => {
   const allowed = new Set([
     'blackboard.hcmiu.edu.vn',
     'accounts.google.com',
     'www.googleapis.com',
     'your-username.github.io', // trang sync (placeholder, đổi theo repo của bạn)
-    'localhost' // trang sync local khi test
+    'localhost', // trang sync local khi test
+    'script.google.com' // Apps Script relay (Giai đoạn 2)
   ]);
   const files = [
     'src/core.js',
@@ -427,6 +448,9 @@ test('Chỉ gọi các domain được phép', () => {
     'src/userscript.meta.js',
     'sync/sync.js',
     'sync/index.html',
+    'apps-script/Code.gs',
+    'bookmarklet/bookmarklet.js',
+    'extension/manifest.json',
     'blackboard-deadlines.user.js'
   ].filter((f) => {
     const exists = fs.existsSync(path.join(root, f));
@@ -460,7 +484,7 @@ test('Không có token/secret/mật khẩu nào trong repo', () => {
     { name: 'Bearer token', re: /Bearer\s+[A-Za-z0-9._-]{25,}/ }
   ];
   const skipDirs = new Set(['.git', 'node_modules']);
-  const exts = new Set(['.js', '.md', '.html', '.json', '.svg', '']);
+  const exts = new Set(['.js', '.md', '.html', '.json', '.svg', '.gs', '']);
   const walk = (dir) => {
     const out = [];
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

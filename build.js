@@ -38,4 +38,8 @@ fs.writeFileSync(outPath, output);
 fs.mkdirSync(path.join(root, 'sync'), { recursive: true });
 fs.copyFileSync(path.join(root, 'src', 'core.js'), path.join(root, 'sync', 'core.js'));
 
-console.log('Đã build: blackboard-deadlines.user.js, sync/core.js');
+// Extension MV3 dùng chung file built, không cần Tampermonkey.
+fs.mkdirSync(path.join(root, 'extension'), { recursive: true });
+fs.writeFileSync(path.join(root, 'extension', 'bb.js'), output);
+
+console.log('Đã build: blackboard-deadlines.user.js, sync/core.js, extension/bb.js');
