@@ -83,6 +83,11 @@ và GitHub Pages đều miễn phí. Hướng dẫn đầy đủ:
 Câu hỏi hay gặp nhất, và câu trả lời thật là: **nửa Blackboard không làm được** từ
 một trang web mà bạn chỉ cần ghé vào:
 
+- **Feed lịch có sẵn của Blackboard là đường cụt ở đây.** Learn cấp được link
+  "external calendar" cá nhân mà Google Calendar subscribe vào là tự refresh lấy —
+  không cần extension, không cần code. Ở HCMIU link đó có thật nhưng trả về file
+  `.ics` **trống trơn**, không có deadline nào. Chính đường cụt này là lý do tool
+  này tồn tại.
 - **Nửa Google thì giải được ngay trong trình duyệt.** Một trang tĩnh gọi được Google
   Calendar API trực tiếp; trang sync hiện tại làm đúng việc đó qua relay Apps Script.
 - **Nửa Blackboard phải nhờ trường.** `blackboard.hcmiu.edu.vn` chạy Learn 3900, REST

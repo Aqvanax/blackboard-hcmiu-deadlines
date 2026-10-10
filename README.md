@@ -82,6 +82,11 @@ Everyone who cannot or does not want to use sync still has the `.ics` export in 
 The most common question, and the honest answer is that the Blackboard half cannot
 be done from a page you merely visit:
 
+- **Blackboard's own calendar feed is a dead end here.** Learn can hand out a
+  personal "external calendar link" that Google Calendar would subscribe to and
+  refresh by itself — no extension, no code. At HCMIU that link exists but serves an
+  **empty `.ics`**: not a single deadline in it. That dead end is the reason this
+  tool exists at all.
 - **The Google half is solvable in-browser.** A static page can drive the Google
   Calendar API directly; that is what the sync page does today via an Apps Script relay.
 - **The Blackboard half needs the university.** `blackboard.hcmiu.edu.vn` runs Learn
