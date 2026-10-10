@@ -91,6 +91,14 @@ global.fetch = async (url, options) => {
 
 require('../blackboard-deadlines.user.js');
 
+/* Đọc origin trang sync từ chính file build để không hardcode. */
+const fs = require('node:fs');
+const SYNC_ORIGIN = new URL(
+  /SYNC_PAGE_URL:\s*'([^']+)'/.exec(
+    fs.readFileSync(require.resolve('../blackboard-deadlines.user.js'), 'utf8')
+  )[1]
+).origin;
+
 const ROOT = 'bbhcmiu-deadlines-root';
 
 /* 1. Nút nổi được chèn, đúng nhãn. */
@@ -135,7 +143,6 @@ assert.equal(registry[ROOT + '-sync'].textContent, 'Đồng bộ Google Calendar
   };
   registry[ROOT + '-sync'].click();
 
-  const SYNC_ORIGIN = 'http://localhost:8000'; // khớp SYNC_PAGE_URL local
   messageListeners.forEach((fn) =>
     fn({
       origin: SYNC_ORIGIN,
