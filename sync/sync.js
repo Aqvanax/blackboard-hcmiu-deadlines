@@ -172,11 +172,14 @@
   };
 
   window.addEventListener('message', function (event) {
-    /* Origin 'null' là thẻ HtmlService trong iframe sandbox, xác thực bằng nonce. */
+    /* Origin 'null' là thẻ HtmlService trong iframe sandbox, origin
+       googleusercontent là trường hợp không sandbox, xác thực hoàn toàn
+       bằng nonce sinh trong runSync. */
     if (
       event.origin !== RELAY_ORIGIN &&
       event.origin !== location.origin &&
-      event.origin !== 'null'
+      event.origin !== 'null' &&
+      event.origin !== 'https://script.googleusercontent.com'
     )
       return;
     acceptResult(event.data);

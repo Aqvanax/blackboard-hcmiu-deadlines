@@ -4,7 +4,7 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v9-card-postmessage';
+var CODE_VERSION = 'v10-delivery';
 // Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
 var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
@@ -107,21 +107,24 @@ function card_(data, bridge) {
     '</p>' +
     (detail ? '<p>' + escapeHtml_(detail) + '</p>' : '') +
     '<p class="muted">Đang chuyển kết quả về trang đồng bộ…</p>' +
+    '<p class="muted">Mã relay: ' +
+    escapeHtml_(String(data.version || '')) +
+    '</p>' +
     '<p><a href="' +
     escapeHtml_(bridge) +
     '" target="_top">Quay lại trang đồng bộ</a></p>' +
     '<p><a href="' +
     escapeHtml_(bridge) +
     '" target="_blank">Mở trang đồng bộ ở tab mới</a></p>' +
+    /* Điều hướng TRƯỚC để done.html ghi localStorage (kể cả trang sync cũ),
+       postMessage SAU, không tự đóng trong thẻ để khỏi cắt ngang điều hướng. */
     '<script>(function(){var d=' +
     json +
     ';' +
-    'try{if(window.parent&&window.parent.opener){window.parent.opener.postMessage(d,"*");}}catch(e){}' +
     'try{window.top.location.href=' +
     JSON.stringify(bridge) +
     ';}catch(e){}' +
-    'setTimeout(function(){try{window.top.close();}catch(e){}' +
-    'try{window.close();}catch(e){}},600);' +
+    'try{if(window.parent&&window.parent.opener){window.parent.opener.postMessage(d,"*");}}catch(e){}' +
     '})();</' +
     'script></body></html>'
   );

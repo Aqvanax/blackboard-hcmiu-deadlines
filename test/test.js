@@ -356,7 +356,10 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     src.includes('https://script.google.com/macros/s/'),
     'trỏ tới Apps Script web app'
   );
-  assert.ok(!src.includes('googleusercontent.com'), 'không còn Client ID OAuth');
+  assert.ok(
+    !src.includes('accounts.google.com/o/oauth') && !src.includes('client_id='),
+    'không còn Client ID OAuth'
+  );
   assert.ok(src.includes("type: 'bbhcmiu-sync'"), 'gửi đúng loại thông điệp');
   assert.ok(src.includes('core.buildGoogleEvent'), 'dựng resource bằng core');
   assert.ok(src.includes('name="payload"'), 'gửi qua form POST để mang cookie Google');
@@ -395,7 +398,7 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'thẻ bắn postMessage về trang sync qua opener (Google không gửi COOP)'
   );
   assert.ok(
-    gs.includes("'v9-card-postmessage'"),
+    gs.includes("'v10-delivery'"),
     'CODE_VERSION đánh dấu relay bản thẻ để chẩn đoán từ popup'
   );
   assert.ok(
@@ -411,8 +414,9 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'trang sync poll JSONP và đóng popup B khi nhận được kết quả'
   );
   assert.ok(
-    src.includes("event.origin !== 'null'"),
-    'trang sync nhận postMessage từ iframe sandbox (origin null), nonce xác thực'
+    src.includes("event.origin !== 'null'") &&
+      src.includes("event.origin !== 'https://script.googleusercontent.com'"),
+    'trang sync nhận postMessage từ iframe sandbox và googleusercontent, nonce xác thực'
   );
   assert.ok(
     gs.includes('SYNC_DONE_URL'),
@@ -536,7 +540,8 @@ test('Chỉ gọi các domain được phép', () => {
     'www.googleapis.com',
     'aqvanax.github.io', // trang sync trên GitHub Pages
     'localhost', // trang sync local khi test
-    'script.google.com' // Apps Script relay (Giai đoạn 2)
+    'script.google.com', // Apps Script relay (Giai đoạn 2)
+    'script.googleusercontent.com' // origin iframe HtmlService trả về postMessage
   ]);
   const files = [
     'src/core.js',
