@@ -108,20 +108,37 @@
     receiveEvents(data.events);
   });
 
-  /* Nhận kết quả từ popup Apps Script */
+  /* Nhận kết quả: qua localStorage khi popup mất opener vì COOP, qua
+     postMessage khi còn. Xác thực hoàn toàn bằng nonce sinh trong runSync. */
 
-  window.addEventListener('message', function (event) {
-    // Kết quả tới từ cầu nối (popup điều hướng về trang sync, cùng nguồn),
-    // còn relay origin giữ lại cho trường hợp HtmlService không iframe.
-    if (event.origin !== RELAY_ORIGIN && event.origin !== location.origin) return;
-    if (!relayPopup || event.source !== relayPopup) return;
-    const data = event.data;
-    if (!data || typeof data !== 'object') return;
-    if (data.type !== 'bbhcmiu-result') return;
-    if (!relayNonce || data.nonce !== relayNonce) return;
+  function acceptResult(data) {
+    if (!data || data.type !== 'bbhcmiu-result') return false;
+    if (!relayNonce || data.nonce !== relayNonce) return false;
     relayNonce = null;
     clearTimeout(relayTimer);
     showSummary(data.created || 0, data.updated || 0, data.failed || 0, data.errors || []);
+    return true;
+  }
+
+  window.addEventListener('message', function (event) {
+    if (event.origin !== RELAY_ORIGIN && event.origin !== location.origin) return;
+    acceptResult(event.data);
+  });
+
+  window.addEventListener('storage', function (event) {
+    if (event.key !== 'bbhcmiuResult' || !event.newValue) return;
+    let data = null;
+    try {
+      data = JSON.parse(event.newValue);
+    } catch (err) {
+      return;
+    }
+    /* Không xoá khi nonce lệch, cửa sổ sync khác có thể đang chờ kết quả này. */
+    if (acceptResult(data)) {
+      try {
+        localStorage.removeItem('bbhcmiuResult');
+      } catch (err) {}
+    }
   });
 
   /* Gửi sang Apps Script relay qua popup form POST */
@@ -139,7 +156,7 @@
       nonce: relayNonce,
       token: RELAY_TOKEN,
       origin: location.origin,
-      syncUrl: location.origin + location.pathname,
+      syncUrl: new URL('done.html', location.href).href,
       events: resources
     });
     relayPopup = window.open('', 'bbhcmiu-relay', 'width=560,height=680');
@@ -234,25 +251,8 @@
     }
   });
 
-  /* Cầu nối: popup được điều hướng về trang này, kết quả nằm trong query. */
-  function consumeBridgeResult() {
-    const raw = new URLSearchParams(location.search).get('bbhcmiuResult');
-    if (!raw) return false;
-    history.replaceState(null, '', location.pathname);
-    let data = null;
-    try {
-      data = JSON.parse(raw);
-    } catch (err) {
-      return false;
-    }
-    if (!data || data.type !== 'bbhcmiu-result') return false;
-    if (!window.opener || window.opener.closed) return false;
-    window.opener.postMessage(data, location.origin);
-    setTimeout(function () {
-      window.close();
-    }, 400);
-    return true;
-  }
-
-  if (!consumeBridgeResult()) startHandshake();
+  /* Cầu nối: Apps Script điều hướng popup về done.html cùng nguồn, kết quả
+     nằm trong query. Popup đi accounts.google.com nên opener có thể đã bị COOP
+     cắt, done.html chuyển kết quả sang đây qua localStorage. */
+  startHandshake();
 })();

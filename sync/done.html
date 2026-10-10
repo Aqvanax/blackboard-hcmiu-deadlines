@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Đồng bộ Google Calendar</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; align-items: center;
+           justify-content: center; min-height: 100vh; margin: 0; background: #f3f4f6;
+           color: #111827; }
+    #box { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+           padding: 24px 28px; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,.08);
+           font-size: 15px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div id="box">Đang nhận kết quả…</div>
+  <script>
+    (function () {
+      var box = document.getElementById('box');
+      var raw = new URLSearchParams(location.search).get('bbhcmiuResult');
+      if (!raw) {
+        box.textContent =
+          'Hãy mở trang này từ nút “Đồng bộ Google Calendar” trong userscript trên Blackboard.';
+        return;
+      }
+      var data = null;
+      try { data = JSON.parse(raw); } catch (e) {}
+      /* Ghi vào localStorage: đường này sống được khi popup mất opener vì COOP. */
+      try { localStorage.setItem('bbhcmiuResult', raw); } catch (e) {}
+      /* Nếu còn opener thì postMessage thẳng, có hoặc không đều được. */
+      try {
+        if (data && window.opener && !window.opener.closed) {
+          window.opener.postMessage(data, location.origin);
+        }
+      } catch (e) {}
+      box.textContent = 'Đã đồng bộ xong. Cửa sổ này sẽ tự đóng…';
+      setTimeout(function () {
+        try { window.close(); } catch (e) {}
+        setTimeout(function () {
+          box.textContent =
+            'Nếu cửa sổ chưa tự đóng, bạn có thể đóng tay. Kết quả đã hiện ở trang đồng bộ.';
+        }, 800);
+      }, 600);
+    })();
+  </script>
+</body>
+</html>

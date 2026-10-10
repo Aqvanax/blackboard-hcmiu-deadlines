@@ -391,8 +391,8 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'điều hướng popup về trang sync (iframe HtmlService không có opener)'
   );
   assert.ok(
-    src.includes("get('bbhcmiuResult')"),
-    'trang sync đọc kết quả từ query cầu nối'
+    read('sync/done.html').includes("get('bbhcmiuResult')"),
+    'trang done đọc kết quả từ query cầu nối'
   );
   assert.ok(
     gs.includes('console.error'),
@@ -403,6 +403,27 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
       read('docs/sync-setup.vi.md').includes('Execute as: User'),
     'docs/sync-setup (EN+VI) hướng dẫn Execute as: User để ghi vào lịch riêng từng người'
   );
+});
+
+test('Kết quả sync đến được trang sync dù popup mất opener vì COOP', () => {
+  const done = read('sync/done.html');
+  assert.ok(
+    done.includes("localStorage.setItem('bbhcmiuResult'"),
+    'trang done phải ghi kết quả vào localStorage'
+  );
+  assert.ok(done.includes('window.close()'), 'trang done phải tự đóng cửa sổ');
+  assert.ok(done.includes('window.opener'), 'trang done vẫn tranh thủ postMessage nếu còn opener');
+  const src = read('sync/sync.js');
+  assert.ok(
+    src.includes("addEventListener('storage'"),
+    'trang sync phải nghe sự kiện storage để nhận kết quả'
+  );
+  assert.ok(
+    src.includes("new URL('done.html'"),
+    'payload phải trỏ popup về trang done, không về trang sync'
+  );
+  assert.ok(!src.includes('consumeBridgeResult'), 'đã bỏ cầu nối cũ phụ thuộc window.opener');
+  assert.ok(src.includes('acceptResult'), 'kết quả được xác thực bằng nonce qua acceptResult');
 });
 
 console.log('File build & an ninh');
