@@ -4,7 +4,7 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v10-delivery';
+var CODE_VERSION = 'v11-walk';
 // Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
 var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
@@ -106,7 +106,7 @@ function card_(data, bridge) {
     stat +
     '</p>' +
     (detail ? '<p>' + escapeHtml_(detail) + '</p>' : '') +
-    '<p class="muted">Đang chuyển kết quả về trang đồng bộ…</p>' +
+    '<p class="muted" id="st">Đang gửi kết quả về trang đồng bộ…</p>' +
     '<p class="muted">Mã relay: ' +
     escapeHtml_(String(data.version || '')) +
     '</p>' +
@@ -116,15 +116,18 @@ function card_(data, bridge) {
     '<p><a href="' +
     escapeHtml_(bridge) +
     '" target="_blank">Mở trang đồng bộ ở tab mới</a></p>' +
-    /* Điều hướng TRƯỚC để done.html ghi localStorage (kể cả trang sync cũ),
-       postMessage SAU, không tự đóng trong thẻ để khỏi cắt ngang điều hướng. */
+    /* Đi dọc tới window.top rồi mới hỏi opener, phòng iframe lồng tầng khiến
+       parent.opener là null; top.location chỉ ăn khi có bấm tay nên giữ link. */
     '<script>(function(){var d=' +
     json +
-    ';' +
+    ';var st=document.getElementById("st");var sent=false;var w=window;' +
+    'try{while(w.parent&&w.parent!==w){w=w.parent;}}catch(e){}' +
+    'try{if(w.opener){w.opener.postMessage(d,"*");sent=true;}}catch(e){}' +
+    'if(st){st.textContent=sent?"Đã gửi kết quả về trang đồng bộ."' +
+    ':"Không gửi trực tiếp được, hãy bấm link bên dưới.";}' +
     'try{window.top.location.href=' +
     JSON.stringify(bridge) +
     ';}catch(e){}' +
-    'try{if(window.parent&&window.parent.opener){window.parent.opener.postMessage(d,"*");}}catch(e){}' +
     '})();</' +
     'script></body></html>'
   );

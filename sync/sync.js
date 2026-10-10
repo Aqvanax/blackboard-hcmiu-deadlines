@@ -16,7 +16,6 @@
   /** Chỉ nhận postMessage từ trang Blackboard của trường. */
   const ALLOWED_ORIGIN = 'https://blackboard.hcmiu.edu.vn';
 
-  const RELAY_ORIGIN = new URL(RELAY_URL).origin;
 
   const core = window.createBbCore();
   const messages = core.messages;
@@ -172,16 +171,9 @@
   };
 
   window.addEventListener('message', function (event) {
-    /* Origin 'null' là thẻ HtmlService trong iframe sandbox, origin
-       googleusercontent là trường hợp không sandbox, xác thực hoàn toàn
-       bằng nonce sinh trong runSync. */
-    if (
-      event.origin !== RELAY_ORIGIN &&
-      event.origin !== location.origin &&
-      event.origin !== 'null' &&
-      event.origin !== 'https://script.googleusercontent.com'
-    )
-      return;
+    /* Không so origin nữa: có thể là null (iframe sandbox), googleusercontent
+       hoặc tuỳ cấu hình HtmlService, mà nonce128-bit trong acceptResult đã
+       là xác thực đủ chắc cho thông điệp kết quả. */
     acceptResult(event.data);
   });
 

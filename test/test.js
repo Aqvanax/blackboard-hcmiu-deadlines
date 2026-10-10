@@ -394,11 +394,11 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'doPost trả thẻ HtmlService (ContentService không serve được text/html)'
   );
   assert.ok(
-    gs.includes('parent.opener.postMessage'),
-    'thẻ bắn postMessage về trang sync qua opener (Google không gửi COOP)'
+    gs.includes('w.opener.postMessage') && gs.includes('w.parent'),
+    'thẻ đi dọc tới top rồi postMessage về trang sync qua opener'
   );
   assert.ok(
-    gs.includes("'v10-delivery'"),
+    gs.includes("'v11-walk'"),
     'CODE_VERSION đánh dấu relay bản thẻ để chẩn đoán từ popup'
   );
   assert.ok(
@@ -414,9 +414,8 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'trang sync poll JSONP và đóng popup B khi nhận được kết quả'
   );
   assert.ok(
-    src.includes("event.origin !== 'null'") &&
-      src.includes("event.origin !== 'https://script.googleusercontent.com'"),
-    'trang sync nhận postMessage từ iframe sandbox và googleusercontent, nonce xác thực'
+    src.includes('acceptResult(event.data)'),
+    'trang sync nhận postMessage mọi origin, nonce128-bit là xác thực'
   );
   assert.ok(
     gs.includes('SYNC_DONE_URL'),
