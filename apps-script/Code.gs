@@ -4,11 +4,26 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v7-htmlredirect';
+var CODE_VERSION = 'v8-html-jsonp';
 // Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
 var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
-function doGet() {
+function doGet(e) {
+  // Kênh JSONP: trang sync đọc kết quả bằng thẻ script, không cần CORS và
+  // không phụ thuộc popup có render được HTML hay không. Mime JAVASCRIPT có
+  // thật trong enum, được tài liệu Google dùng sẵn cho JSONP.
+  if (e && e.parameter && e.parameter.action === 'result') {
+    var raw = PropertiesService.getScriptProperties().getProperty('bbResult') || '';
+    var match = false;
+    try {
+      match = raw !== '' && JSON.parse(raw).nonce === String(e.parameter.nonce || '');
+    } catch (err) {}
+    var cb = String(e.parameter.callback || '');
+    if (!/^[A-Za-z_$][0-9A-Za-z_$]*$/.test(cb)) cb = 'bbhcmiuPoll';
+    return ContentService.createTextOutput(cb + '(' + (match ? raw : 'null') + ');').setMimeType(
+      ContentService.MimeType.JAVASCRIPT
+    );
+  }
   return html_(
     'Đã sẵn sàng',
     'Ủy quyền thành công. Quay lại trang đồng bộ và bấm “Đồng bộ vào Google Calendar”.'
@@ -53,6 +68,9 @@ function doPost(e) {
     SYNC_DONE_URL +
     '?bbhcmiuResult=' +
     encodeURIComponent(JSON.stringify(data));
+  // Lưu kết quả vào Script Property (1 khóa cố định) để trang sync đọc lại
+  // bằng JSONP khi popup không tự điều hướng được, không bao giờ timeout oan.
+  PropertiesService.getScriptProperties().setProperty('bbResult', JSON.stringify(data));
   // Trang HTML nhỏ tự điều hướng: ContentService trả thẳng tài liệu cấp cao
   // nhất, không iframe nên popup về done.html, đóng cửa sổ và localStorage chạy.
   var hop =
@@ -71,7 +89,13 @@ function doPost(e) {
     escapeHtml_(bridge) +
     '">Bấm vào đây nếu trang không tự chuyển</a></p>' +
     '</body></html>';
-  return ContentService.createTextOutput(hop).setMimeType(ContentService.MimeType.HTML);
+  var out = ContentService.createTextOutput(hop);
+  try {
+    // Enum MimeType không có HTML nên ép bằng string trực tiếp; nếu runtime
+    // chối thì vẫn là text/plain, JSONP và nút đóng handle lo phần kết quả.
+    out.setMimeType('text/html');
+  } catch (ignored) {}
+  return out;
 }
 
 function escapeHtml_(s) {

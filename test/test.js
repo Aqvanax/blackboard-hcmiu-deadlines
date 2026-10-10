@@ -387,16 +387,28 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
   assert.ok(gs.includes('bbhcmiuResult'), 'trả kết quả qua cầu nối bbhcmiuResult');
   assert.ok(
-    gs.includes('setMimeType') && gs.includes('MimeType.HTML'),
-    'doPost trả HTML tự điều hướng, không iframe HtmlService'
+    gs.includes("setMimeType('text/html')"),
+    'doPost ép text/html bằng string (enum MimeType không có thành viên HTML)'
   );
   assert.ok(
     gs.includes('http-equiv="refresh"'),
     'meta refresh phòng khi script bị chặn'
   );
   assert.ok(
-    gs.includes("'v7-htmlredirect'"),
+    gs.includes("'v8-html-jsonp'"),
     'CODE_VERSION đánh dấu relay bản redirect để chẩn đoán từ popup'
+  );
+  assert.ok(
+    gs.includes("action === 'result'") && gs.includes('MimeType.JAVASCRIPT'),
+    'doGet có kênh JSONP mime JAVASCRIPT theo đúng tài liệu Google'
+  );
+  assert.ok(
+    gs.includes("'bbResult'"),
+    'doPost lưu kết quả để trang sync đọc lại bằng JSONP'
+  );
+  assert.ok(
+    src.includes('bbhcmiuPoll') && src.includes('relayPopup.close()'),
+    'trang sync poll JSONP và đóng popup B khi nhận được kết quả'
   );
   assert.ok(
     gs.includes('SYNC_DONE_URL'),

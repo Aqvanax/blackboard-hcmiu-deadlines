@@ -27,6 +27,9 @@
   let relayNonce = null;
   let relayTimer = null;
   let relayPollTimer = null;
+  let relayJsonpTimer = null;
+  let relayJsonpTries = 0;
+  let jsonpScript = null;
 
   const $ = (id) => document.getElementById(id);
 
@@ -115,6 +118,13 @@
   function stopWaitingResult() {
     clearTimeout(relayTimer);
     clearInterval(relayPollTimer);
+    clearInterval(relayJsonpTimer);
+    if (jsonpScript) {
+      try {
+        jsonpScript.remove();
+      } catch (err) {}
+      jsonpScript = null;
+    }
   }
 
   function acceptResult(data) {
@@ -122,9 +132,44 @@
     if (!relayNonce || data.nonce !== relayNonce) return false;
     relayNonce = null;
     stopWaitingResult();
+    /* Popup có thể còn đứng ở trang text/plain: đóng nốt nếu handle còn sống.
+       Đóng sau khi có kết quả để không phá màn hình ủy quyền lần đầu. */
+    try {
+      if (relayPopup && !relayPopup.closed) relayPopup.close();
+    } catch (err) {}
     showSummary(data.created || 0, data.updated || 0, data.failed || 0, data.errors || []);
     return true;
   }
+
+  /* JSONP: nạp script từ relay, mime JAVASCRIPT nên chạy được cả khi hop
+     không render (text/plain) và khi COOP cắt mọi kênh còn lại. */
+  function jsonpPoll() {
+    if (!relayNonce) return;
+    if (jsonpScript) {
+      try {
+        jsonpScript.remove();
+      } catch (err) {}
+      jsonpScript = null;
+    }
+    if (relayJsonpTries++ >= 20) return;
+    const s = document.createElement('script');
+    s.src =
+      RELAY_URL +
+      '?action=result&callback=bbhcmiuPoll&nonce=' +
+      relayNonce +
+      '&_=' +
+      Date.now();
+    s.async = true;
+    s.onerror = function () {
+      /* relay chưa chạy xong hoặc thiếu cookie: bỏ qua, vòng sau thử tiếp. */
+    };
+    document.body.appendChild(s);
+    jsonpScript = s;
+  }
+
+  window.bbhcmiuPoll = function (data) {
+    acceptResult(data);
+  };
 
   window.addEventListener('message', function (event) {
     if (event.origin !== RELAY_ORIGIN && event.origin !== location.origin) return;
@@ -186,6 +231,10 @@
         } catch (err) {}
       }
     }, 700);
+    /* Kênh thứ hai: JSONP hỏi thẳng relay, không qua popup. */
+    relayJsonpTries = 0;
+    jsonpPoll();
+    relayJsonpTimer = setInterval(jsonpPoll, 1500);
   }
 
   /* Gửi sang Apps Script relay qua popup form POST */
