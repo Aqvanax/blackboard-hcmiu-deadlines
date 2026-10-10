@@ -20,6 +20,9 @@ Script chỉ đọc cửa sổ 180 ngày tới (đổi được) và lọc bỏ 
 
 Ba cách, cùng một mã nguồn đã build.
 
+- Cách nhanh nhất: mở <https://aqvanax.github.io/blackboard-hcmiu-deadlines/> rồi
+  kéo nút bookmarklet trên đó vào thanh dấu trang.
+
 **Cách 1 — Extension trình duyệt** (không cần Tampermonkey)
 
 1. `node build.js` — sinh ra `extension/bb.js`.

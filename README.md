@@ -20,6 +20,9 @@ collection, and it never asks for your Blackboard password. It reads the next
 
 Three options, all running the same built code.
 
+- Shortest path: open <https://aqvanax.github.io/blackboard-hcmiu-deadlines/> and
+  drag its bookmarklet button onto your bookmarks bar.
+
 **Option 1 — Browser extension** (no Tampermonkey)
 
 1. `node build.js` — generates `extension/bb.js`.

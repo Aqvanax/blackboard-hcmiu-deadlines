@@ -587,6 +587,25 @@ test('Tài liệu: README EN/VI song song, liên kết chéo, nhánh Pages đún
   assert.strictEqual(heads(en), heads(vi), 'README EN và VI lệch số mục');
 });
 
+test('Landing page: URL bookmarklet một dòng, khớp nguồn và đủ liên kết cài', () => {
+  const lines = read('bookmarklet/bookmarklet.js').split('\n');
+  const idx = lines.findIndex((l) => l.startsWith('javascript:'));
+  assert.ok(idx >= 0, 'bookmarklet thiếu dòng javascript:');
+  assert.ok(
+    lines.slice(idx + 1).every((l) => l.trim() === ''),
+    'dòng javascript: phải đứng một mình ở cuối file'
+  );
+  assert.ok(lines[idx].trimEnd().endsWith('})();'), 'bookmarklet thiếu phần kết');
+  const page = read('index.html');
+  assert.ok(
+    page.includes('href="' + lines[idx].trimEnd() + '"'),
+    'index.html không chứa đúng URL bookmarklet'
+  );
+  assert.ok(page.includes('blackboard-deadlines.user.js'), 'index.html thiếu liên kết cài userscript');
+  assert.ok(page.includes('privacy.html'), 'index.html thiếu liên kết privacy');
+  assert.ok(page.includes('blackboard.hcmiu.edu.vn'), 'index.html thiếu liên kết trang Blackboard');
+});
+
 function icsHasVTIMEZONE(ics) {
   return ics.includes('VTIMEZONE');
 }

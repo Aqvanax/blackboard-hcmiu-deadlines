@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blackboard HCMIU Deadlines — trang cài một chỗ</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 28px auto;
+           padding: 0 20px; color: #111827; line-height: 1.6; }
+    h1 { font-size: 26px; margin-bottom: 4px; }
+    h2 { font-size: 18px; margin-top: 30px; }
+    .lead { color: #6b7280; margin-top: 0; }
+    section { border: 1px solid #e5e7eb; border-radius: 12px; padding: 4px 18px 14px;
+              margin-top: 16px; }
+    ol { padding-left: 22px; }
+    li { margin: 6px 0; }
+    code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+    kbd { background: #f3f4f6; border: 1px solid #d1d5db; border-bottom-width: 2px;
+          border-radius: 4px; padding: 0 5px; font-size: 12px; }
+    .bm { display: inline-block; background: #1d4ed8; color: #fff; font-weight: 600;
+          padding: 12px 22px; border-radius: 10px; text-decoration: none;
+          font-size: 16px; cursor: grab; user-select: all; }
+    .bm:hover { background: #1e40af; }
+    button { font: inherit; font-size: 14px; background: #fff; color: #1d4ed8;
+             border: 1px solid #1d4ed8; border-radius: 8px; padding: 7px 14px;
+             cursor: pointer; margin-left: 10px; }
+    button:hover { background: #eff6ff; }
+    .note { font-size: 14px; color: #6b7280; }
+    .flow { background: #f9fafb; border-radius: 8px; padding: 10px 14px;
+            font-size: 14.5px; }
+    footer { margin-top: 26px; padding-top: 14px; border-top: 1px solid #e5e7eb;
+             color: #6b7280; font-size: 13px; }
+    footer p { margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <h1>Blackboard HCMIU Deadlines</h1>
+  <p class="lead">Đưa deadline Blackboard vào Google Calendar. Chọn một cách, làm một
+    lần, dùng mãi. Miễn phí toàn bộ, không tài khoản store, không máy chủ của dự án.</p>
+
+  <section>
+    <h2>Cách 1 · Bookmarklet (nhanh nhất, không cài gì)</h2>
+    <ol>
+      <li>Bật thanh dấu trang: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>
+        (Windows/Linux) hoặc <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> (macOS).</li>
+      <li><strong>Kéo nút dưới đây</strong> thả vào thanh dấu trang. Không kéo được
+        thì bấm <em>Sao chép</em>, tạo bookmark thủ công và dán vào trường URL.</li>
+      <li>Mở <a href="https://blackboard.hcmiu.edu.vn/webapps/calendar/">lịch Blackboard</a>,
+        bấm bookmark → hiện 2 nút nổi.</li>
+    </ol>
+    <p style="margin: 14px 0 8px">
+      <a id="bm" class="bm" href="javascript:(function(){var s=document.createElement('script');s.src='https://aqvanax.github.io/blackboard-hcmiu-deadlines/blackboard-deadlines.user.js';document.body.appendChild(s);})();">＋ Thêm deadline vào lịch</a>
+      <button id="copy" type="button">Sao chép</button>
+      <span id="copied" hidden>Đã sao chép ✓</span>
+    </p>
+    <p class="note">Bấm vào nút xanh ở trang này sẽ không chạy gì (chỉ để kéo).
+      Không hiện nút trên Blackboard? Trang đó chặn script (CSP) → chuyển Cách 2.
+      Bookmarklet dùng trên máy tính.</p>
+  </section>
+
+  <section>
+    <h2>Cách 2 · Tampermonkey (không cần Developer mode, tự cập nhật)</h2>
+    <ol>
+      <li>Cài <a href="https://www.tampermonkey.net/">Tampermonkey</a> (miễn phí,
+        có trên cửa hàng Chrome).</li>
+      <li>Bấm <a href="https://aqvanax.github.io/blackboard-hcmiu-deadlines/blackboard-deadlines.user.js">link cài userscript</a>
+        → trình duyệt mở Tampermonkey → <em>Cài đặt</em>.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Cách 3 · Extension (không qua store)</h2>
+    <p>Chrome/Edge: <code>chrome://extensions</code> → bật <em>Developer mode</em> →
+      <em>Load unpacked</em> → chọn thư mục <code>extension/</code> trong
+      <a href="https://github.com/Aqvanax/blackboard-hcmiu-deadlines">repo GitHub</a>.</p>
+  </section>
+
+  <section>
+    <h2>Dùng thế nào</h2>
+    <p class="flow">Trên trang lịch Blackboard: bấm <strong>Xuất deadline (.ics)</strong>
+      để tải file nhập tay, hoặc <strong>Đồng bộ Google Calendar</strong> để ghi thẳng.
+      Lần đầu Google hỏi ủy quyền script một lần: chọn <em>Advanced → Allow</em>
+      (cảnh báo "unverified" là bình thường với script cá nhân), rồi bấm Đồng bộ lần
+      nữa. Mỗi người ghi vào lịch <strong>"Blackboard Deadlines" của chính mình</strong>.</p>
+  </section>
+
+  <footer>
+    <p><a href="https://github.com/Aqvanax/blackboard-hcmiu-deadlines">Mã nguồn (MIT)</a>
+      · <a href="./privacy.html">Chính sách bảo mật / Privacy policy</a>
+      · <a href="./sync/">Trang đồng bộ</a>
+      · <a href="https://github.com/Aqvanax/blackboard-hcmiu-deadlines/blob/master/README.vi.md">README tiếng Việt</a></p>
+    <p>Dự án cá nhân, không liên kết với Blackboard hay HCMIU.</p>
+  </footer>
+
+  <script>
+    document.getElementById('copy').addEventListener('click', function () {
+      var url = document.getElementById('bm').getAttribute('href');
+      navigator.clipboard.writeText(url).then(function () {
+        document.getElementById('copied').hidden = false;
+      });
+    });
+    document.getElementById('bm').addEventListener('click', function (e) {
+      e.preventDefault(); // chặn chạy code ngay tại trang landing
+    });
+  </script>
+</body>
+</html>
