@@ -4,6 +4,7 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
+var CODE_VERSION = 'v5-REST';
 
 function doGet() {
   return html_(
@@ -60,7 +61,9 @@ function syncEvents_(events) {
     else {
       failed++;
       errors.push((ev.summary || ev.id) + ': ' + r);
-      console.error('bbhcmiu: ' + (ev.summary || ev.id) + ': ' + r);
+      console.error(
+        'bbhcmiu[' + CODE_VERSION + ']: ' + (ev.summary || ev.id) + ': ' + r
+      );
     }
   });
 
@@ -68,24 +71,43 @@ function syncEvents_(events) {
 }
 
 // Insert, nếu 409 thì patch cùng ID, chạy lại không nhân đôi.
-// Advanced Calendar Service lấy resource đứng trước, calendarId đứng sau.
+// Gọi REST Calendar API bằng UrlFetchApp để kiểm soát request và đọc
+// được body lỗi chi tiết thay vì "Bad Request" chung chung.
 function upsertOne_(calendarId, ev) {
-  try {
-    Calendar.Events.insert(ev, calendarId);
-    return 'created';
-  } catch (err) {
-    var code = status_(err);
-    if (code === 409) {
-      try {
-        Calendar.Events.patch(ev, calendarId, ev.id);
-        return 'updated';
-      } catch (err2) {
-        return errText_(err2);
-      }
-    }
-    if (code === 404) return 'calendar-missing';
-    return errText_(err);
+  var url =
+    'https://www.googleapis.com/calendar/v3/calendars/' +
+    encodeURIComponent(calendarId) +
+    '/events';
+  var options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+    payload: JSON.stringify(ev),
+    muteHttpExceptions: true
+  };
+  var resp = UrlFetchApp.fetch(url, options);
+  var code = resp.getResponseCode();
+  if (code >= 200 && code < 300) return 'created';
+  if (code === 409) {
+    options.method = 'patch';
+    resp = UrlFetchApp.fetch(url + '/' + encodeURIComponent(ev.id), options);
+    code = resp.getResponseCode();
+    if (code >= 200 && code < 300) return 'updated';
   }
+  if (code === 404) return 'calendar-missing';
+  return httpErrText_(resp, code);
+}
+
+// Đọc message lỗi thật từ body JSON của Calendar API.
+function httpErrText_(resp, code) {
+  var body = '';
+  try {
+    var parsed = JSON.parse(resp.getContentText());
+    if (parsed && parsed.error && parsed.error.message) {
+      body = parsed.error.message;
+    }
+  } catch (e) {}
+  return 'HTTP ' + code + (body ? ': ' + body : '');
 }
 
 // Tìm lịch bằng CalendarApp, không có thì tạo mới.
@@ -98,14 +120,6 @@ function ensureCalendar_() {
     CalendarApp.createCalendar(CALENDAR_NAME, { timeZone: TIME_ZONE });
   props.setProperty('calendarId', cal.getId());
   return cal.getId();
-}
-
-function status_(err) {
-  try {
-    return err.details.code;
-  } catch (e) {
-    return 0;
-  }
 }
 
 function errText_(err) {
@@ -137,6 +151,7 @@ function htmlResult_(result, payload) {
       (data.failed > 0 ? ', lỗi ' + data.failed : '') +
       '.'
     : 'Lỗi: ' + data.error;
+  text += ' (mã relay: ' + CODE_VERSION + ')';
   var list = '';
   data.errors.forEach(function (line) {
     list += '<br>' + escapeHtml_(line);

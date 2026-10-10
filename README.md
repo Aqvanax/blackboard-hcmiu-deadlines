@@ -83,9 +83,8 @@ Both Apps Script and GitHub Pages are free.
 1. **Deploy the relay.** Open <https://script.new> (logged in with the Google account
    that should own the calendar) and paste [`apps-script/Code.gs`](./apps-script/Code.gs),
    **Save**.
-   - **Enable the Calendar service** (required): left sidebar → *Services* (**+**) →
-     *Google Calendar API* → **Add** → **Save**. Without it every sync fails with
-     `Calendar is not defined`.
+   - No extra service is required: the script calls the Calendar API directly
+     through `UrlFetchApp` using its own OAuth token.
    - Then *Deploy → New deployment → **Web app***:
      - **Execute as: User accessing the app**, **Who has access: Anyone** → **Deploy**
        → copy the URL ending in `/exec`.
@@ -264,9 +263,8 @@ Apps Script và GitHub Pages đều miễn phí.
 
 1. **Deploy relay.** Mở <https://script.new> (đăng nhập bằng tài khoản Google sẽ giữ
    lịch), dán [`apps-script/Code.gs`](./apps-script/Code.gs), **Save**.
-   - **Bật dịch vụ Calendar** (bắt buộc): cột trái → *Services* (**+**) →
-     *Google Calendar API* → **Add** → **Save**. Nếu thiếu, mọi lần đồng bộ đều lỗi
-     `Calendar is not defined`.
+   - Không cần bật thêm service nào: script gọi thẳng Calendar API qua
+     `UrlFetchApp` bằng token OAuth của chính nó.
    - Sau đó *Deploy → New deployment → **Web app***:
      - **Execute as: User accessing the app**, **Who has access: Anyone** → **Deploy**
        → copy URL kết thúc `/exec`.

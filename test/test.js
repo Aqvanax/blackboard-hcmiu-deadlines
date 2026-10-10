@@ -363,13 +363,22 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(src.includes('relayNonce'), 'có nonce chống giả mạo postMessage');
   const gs = read('apps-script/Code.gs');
   assert.ok(
-    gs.includes('Calendar.Events.insert(ev, calendarId)'),
-    'insert đúng thứ tự: resource trước, calendarId sau'
+    gs.includes('https://www.googleapis.com/calendar/v3/calendars/'),
+    'ghi sự kiện bằng REST Calendar API (UrlFetchApp)'
   );
   assert.ok(
-    gs.includes('Calendar.Events.patch(ev, calendarId, ev.id)'),
-    '409 thì patch, đúng thứ tự đối số'
+    gs.includes('ScriptApp.getOAuthToken()'),
+    'gửi kèm token OAuth của script'
   );
+  assert.ok(
+    gs.includes("options.method = 'patch'"),
+    '409 thì patch cùng ID'
+  );
+  assert.ok(
+    gs.includes('muteHttpExceptions'),
+    'đọc được body lỗi chi tiết từ API'
+  );
+  assert.ok(gs.includes('CODE_VERSION'), 'hiện mã version relay để chẩn đoán');
   assert.ok(gs.includes('getCalendarsByName'), 'tìm hoặc tạo lịch Blackboard Deadlines');
   assert.ok(
     gs.includes("CALENDAR_NAME = 'Blackboard Deadlines'"),
