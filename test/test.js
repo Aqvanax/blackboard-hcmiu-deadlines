@@ -387,12 +387,20 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
   assert.ok(gs.includes('bbhcmiuResult'), 'trả kết quả qua cầu nối bbhcmiuResult');
   assert.ok(
-    gs.includes('setRedirectUrl') && gs.includes('SYNC_DONE_URL'),
-    'doPost trả redirect thật (không iframe HtmlService) về URL done cố định'
+    gs.includes('setMimeType') && gs.includes('MimeType.HTML'),
+    'doPost trả HTML tự điều hướng, không iframe HtmlService'
   );
   assert.ok(
-    gs.includes("'v6-redirect'"),
+    gs.includes('http-equiv="refresh"'),
+    'meta refresh phòng khi script bị chặn'
+  );
+  assert.ok(
+    gs.includes("'v7-htmlredirect'"),
     'CODE_VERSION đánh dấu relay bản redirect để chẩn đoán từ popup'
+  );
+  assert.ok(
+    gs.includes('SYNC_DONE_URL'),
+    'relay cố định URL done, không tin syncUrl gửi từ client'
   );
   assert.ok(
     read('sync/done.html').includes("get('bbhcmiuResult')"),

@@ -4,7 +4,7 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v6-redirect';
+var CODE_VERSION = 'v7-htmlredirect';
 // Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
 var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
@@ -49,13 +49,36 @@ function doPost(e) {
     error: result.ok ? '' : String(result.error || ''),
     version: CODE_VERSION
   };
-  // Redirect thật về done.html: popup đi thẳng, không iframe HtmlService nên
-  // tự đóng được và ghi localStorage đúng vùng lưu trữ của trang sync.
   var bridge =
     SYNC_DONE_URL +
     '?bbhcmiuResult=' +
     encodeURIComponent(JSON.stringify(data));
-  return ContentService.createTextOutput(bridge).setRedirectUrl(bridge);
+  // Trang HTML nhỏ tự điều hướng: ContentService trả thẳng tài liệu cấp cao
+  // nhất, không iframe nên popup về done.html, đóng cửa sổ và localStorage chạy.
+  var hop =
+    '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">' +
+    '<meta http-equiv="refresh" content="0;url=' +
+    escapeHtml_(bridge) +
+    '">' +
+    '<title>Đang quay lại trang đồng bộ</title></head>' +
+    '<body style="font:15px system-ui">' +
+    '<p>Đã đồng bộ xong, đang quay lại trang đồng bộ…</p>' +
+    '<script>location.href=' +
+    JSON.stringify(bridge) +
+    ';</' +
+    'script>' +
+    '<p><a href="' +
+    escapeHtml_(bridge) +
+    '">Bấm vào đây nếu trang không tự chuyển</a></p>' +
+    '</body></html>';
+  return ContentService.createTextOutput(hop).setMimeType(ContentService.MimeType.HTML);
+}
+
+function escapeHtml_(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 // Đồng bộ theo tài khoản của người ĐANG GỌI (Execute as: User accessing).
