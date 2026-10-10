@@ -387,8 +387,12 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
   assert.ok(gs.includes('bbhcmiuResult'), 'trả kết quả qua cầu nối bbhcmiuResult');
   assert.ok(
-    gs.includes('window.top.location'),
-    'điều hướng popup về trang sync (iframe HtmlService không có opener)'
+    gs.includes('setRedirectUrl') && gs.includes('SYNC_DONE_URL'),
+    'doPost trả redirect thật (không iframe HtmlService) về URL done cố định'
+  );
+  assert.ok(
+    gs.includes("'v6-redirect'"),
+    'CODE_VERSION đánh dấu relay bản redirect để chẩn đoán từ popup'
   );
   assert.ok(
     read('sync/done.html').includes("get('bbhcmiuResult')"),
@@ -412,6 +416,9 @@ test('Kết quả sync đến được trang sync dù popup mất opener vì COO
     'trang done phải ghi kết quả vào localStorage'
   );
   assert.ok(done.includes('window.close()'), 'trang done phải tự đóng cửa sổ');
+  assert.ok(done.includes("window.open('', '_self')"), 'phương án đóng thứ hai phòng hờ');
+  assert.ok(done.includes('data.version'), 'trang done hiện mã relay để chẩn đoán');
+  assert.ok(done.includes('data.created'), 'trang done hiện thống kê tạo mới');
   assert.ok(done.includes('window.opener'), 'trang done vẫn tranh thủ postMessage nếu còn opener');
   const src = read('sync/sync.js');
   assert.ok(

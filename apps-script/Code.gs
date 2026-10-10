@@ -4,7 +4,9 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v5-REST';
+var CODE_VERSION = 'v6-redirect';
+// Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
+var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
 function doGet() {
   return html_(
@@ -37,7 +39,23 @@ function doPost(e) {
   } catch (err) {
     result = { ok: false, error: errText_(err) };
   }
-  return htmlResult_(result, payload);
+  var data = {
+    type: 'bbhcmiu-result',
+    nonce: String(payload.nonce || ''),
+    created: result.created || 0,
+    updated: result.updated || 0,
+    failed: result.failed || 0,
+    errors: (result.errors || []).slice(0, 8),
+    error: result.ok ? '' : String(result.error || ''),
+    version: CODE_VERSION
+  };
+  // Redirect thật về done.html: popup đi thẳng, không iframe HtmlService nên
+  // tự đóng được và ghi localStorage đúng vùng lưu trữ của trang sync.
+  var bridge =
+    SYNC_DONE_URL +
+    '?bbhcmiuResult=' +
+    encodeURIComponent(JSON.stringify(data));
+  return ContentService.createTextOutput(bridge).setRedirectUrl(bridge);
 }
 
 // Đồng bộ theo tài khoản của người ĐANG GỌI (Execute as: User accessing).
@@ -129,58 +147,6 @@ function errText_(err) {
     }
   } catch (e) {}
   return String(err && err.message ? err.message : err);
-}
-
-// Trang kết quả: hiện thống kê và danh sách lỗi, rồi điều hướng popup về trang
-// sync (cùng nguồn) để postMessage kết quả về Blackboard rồi popup tự đóng.
-function htmlResult_(result, payload) {
-  var data = {
-    type: 'bbhcmiu-result',
-    nonce: String(payload.nonce || ''),
-    created: result.created || 0,
-    updated: result.updated || 0,
-    failed: result.failed || 0,
-    errors: (result.errors || []).slice(0, 8),
-    error: result.ok ? '' : String(result.error || '')
-  };
-  var text = result.ok
-    ? 'Đồng bộ xong: tạo mới ' +
-      data.created +
-      ', cập nhật ' +
-      data.updated +
-      (data.failed > 0 ? ', lỗi ' + data.failed : '') +
-      '.'
-    : 'Lỗi: ' + data.error;
-  text += ' (mã relay: ' + CODE_VERSION + ')';
-  var list = '';
-  data.errors.forEach(function (line) {
-    list += '<br>' + escapeHtml_(line);
-  });
-  // HtmlService luôn chạy trong iframe nên window.opener null: điều hướng
-  // popup về trang sync (cùng nguồn) thì postMessage và tự đóng mới chạy được.
-  var base = String(payload.syncUrl || '');
-  var bridge =
-    base +
-    (base.indexOf('?') > 0 ? '&' : '?') +
-    'bbhcmiuResult=' +
-    encodeURIComponent(JSON.stringify(data));
-  var script =
-    '<script>setTimeout(function(){try{window.top.location.href=' +
-    JSON.stringify(bridge) +
-    ';}catch(e){window.location.href=' +
-    JSON.stringify(bridge) +
-    ';}},300);</' + 'script>';
-  return html_(
-    'Kết quả',
-    text + (list ? '<p style="font-size:13px">' + list + '</p>' : '') + script
-  );
-}
-
-function escapeHtml_(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 
 function html_(title, body) {

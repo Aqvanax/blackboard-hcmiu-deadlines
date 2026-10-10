@@ -9,12 +9,14 @@
            justify-content: center; min-height: 100vh; margin: 0; background: #f3f4f6;
            color: #111827; }
     #box { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
-           padding: 24px 28px; max-width: 420px; box-shadow: 0 8px 24px rgba(0,0,0,.08);
+           padding: 24px 28px; max-width: 440px; box-shadow: 0 8px 24px rgba(0,0,0,.08);
            font-size: 15px; line-height: 1.5; }
+    #box small { color: #6b7280; }
+    #errs { margin: 10px 0 0; padding-left: 20px; font-size: 13px; color: #b91c1c; }
   </style>
 </head>
 <body>
-  <div id="box">Đang nhận kết quả…</div>
+  <div id="box">Đang nhận kết quả…<br><small>mã relay: …</small></div>
   <script>
     (function () {
       var box = document.getElementById('box');
@@ -22,6 +24,7 @@
       if (!raw) {
         box.textContent =
           'Hãy mở trang này từ nút “Đồng bộ Google Calendar” trong userscript trên Blackboard.';
+        setTimeout(function () { try { window.close(); } catch (e) {} }, 6000);
         return;
       }
       var data = null;
@@ -34,14 +37,42 @@
           window.opener.postMessage(data, location.origin);
         }
       } catch (e) {}
-      box.textContent = 'Đã đồng bộ xong. Cửa sổ này sẽ tự đóng…';
+
+      var head = data && data.error
+        ? 'Lỗi: ' + data.error
+        : 'Đã đồng bộ xong: tạo mới ' + ((data && data.created) || 0) +
+          ', cập nhật ' + ((data && data.updated) || 0) +
+          ((data && data.failed) > 0 ? ', lỗi ' + data.failed : '') + '.';
+      box.innerHTML = '';
+      var p = document.createElement('div');
+      p.textContent = head;
+      box.appendChild(p);
+      var ver = document.createElement('small');
+      ver.textContent = 'mã relay: ' + ((data && data.version) || 'chưa rõ');
+      box.appendChild(ver);
+      var errs = (data && data.errors) || [];
+      if (errs.length) {
+        var ul = document.createElement('ul');
+        ul.id = 'errs';
+        errs.slice(0, 5).forEach(function (line) {
+          var li = document.createElement('li');
+          li.textContent = line;
+          ul.appendChild(li);
+        });
+        box.appendChild(ul);
+      }
+      var tail = document.createElement('div');
+      tail.textContent = 'Cửa sổ này sẽ tự đóng…';
+      box.appendChild(tail);
+
       setTimeout(function () {
         try { window.close(); } catch (e) {}
+        try { window.open('', '_self').close(); } catch (e) {}
         setTimeout(function () {
-          box.textContent =
-            'Nếu cửa sổ chưa tự đóng, bạn có thể đóng tay. Kết quả đã hiện ở trang đồng bộ.';
-        }, 800);
-      }, 600);
+          tail.textContent =
+            'Không tự đóng được thì bấm Ctrl+W hay nút X nhé. Kết quả đã hiện ở trang đồng bộ.';
+        }, 900);
+      }, 700);
     })();
   </script>
 </body>

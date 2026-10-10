@@ -150,6 +150,10 @@
   /* COOP có thể chặn cả event giữa 2 cửa sổ, nên vừa nghe vừa đọc tay cho chắc. */
   function startWaitingResult() {
     stopWaitingResult();
+    /* Key cũ là rác của lần đồng bộ trước, xoá khỏi đầu để khỏi đọc nhầm. */
+    try {
+      localStorage.removeItem('bbhcmiuResult');
+    } catch (err) {}
     relayTimer = setTimeout(function () {
       if (!relayNonce) return;
       $('result').textContent =
