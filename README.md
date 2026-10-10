@@ -48,6 +48,9 @@ Building from source: `node build.js` — no npm dependencies.
 
 ## 2. Usage
 
+Not sure which route fits you? **[All the ways compared](./docs/import-methods.md)**
+— including the two that do not work yet and why.
+
 ### A — Export `.ics`
 
 1. Open <https://blackboard.hcmiu.edu.vn/webapps/calendar/> and log in.
@@ -167,4 +170,4 @@ node build.js   # regenerates the userscript, sync/core.js and extension/bb.js
 | `bookmarklet/` | bookmarklet loader |
 | `store/` | Chrome Web Store submission package |
 | `test/` | test suite, fake data only |
-| `docs/` | setup guide and screenshots |
+| `docs/` | guides (import methods, sync setup) and screenshots |

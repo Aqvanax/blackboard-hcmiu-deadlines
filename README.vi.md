@@ -48,6 +48,9 @@ Tự build từ nguồn: `node build.js` — không cần npm dependency.
 
 ## 2. Cách dùng
 
+Chưa biết chọn đường nào? **[So sánh tất cả các cách](./docs/import-methods.vi.md)**
+— gồm cả hai đường hiện chưa chạy được và lý do.
+
 ### A — Xuất `.ics`
 
 1. Mở <https://blackboard.hcmiu.edu.vn/webapps/calendar/> và đăng nhập.
@@ -168,4 +171,4 @@ node build.js   # tạo lại userscript, sync/core.js và extension/bb.js
 | `bookmarklet/` | loader bookmarklet |
 | `store/` | hồ sơ submit Chrome Web Store |
 | `test/` | bộ test, chỉ dữ liệu giả |
-| `docs/` | hướng dẫn setup và ảnh minh họa |
+| `docs/` | hướng dẫn (cách import, cấu hình sync) và ảnh minh họa |
