@@ -436,7 +436,7 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   );
 });
 
-test('Kết quả sync đến được trang sync dù popup mất opener vì COOP', () => {
+test('Kết quả sync về được trang sync qua postMessage, localStorage và JSONP', () => {
   const done = read('sync/done.html');
   assert.ok(
     done.includes("localStorage.setItem('bbhcmiuResult'"),
@@ -460,7 +460,7 @@ test('Kết quả sync đến được trang sync dù popup mất opener vì COO
   assert.ok(src.includes('acceptResult'), 'kết quả được xác thực bằng nonce qua acceptResult');
   assert.ok(
     src.includes("localStorage.getItem('bbhcmiuResult')"),
-    'polling đọc trực tiếp localStorage phòng event bị COOP chặn'
+    'polling đọc trực tiếp localStorage phòng event không tới nơi'
   );
   assert.ok(
     src.includes('setInterval') && src.includes('stopWaitingResult'),
@@ -645,6 +645,12 @@ test('Tài liệu: README EN/VI song song, liên kết chéo, nhánh Pages đún
   // Nhánh mặc định của repo là master: tài liệu từng ghi sai thành main.
   for (const f of docs) {
     assert.ok(!/`main`\s*\/\s*root/.test(read(f)), f + ' còn ghi nhánh Pages là main');
+  }
+  // COOP đã được kiểm chứng không tồn tại trên host relay, cả tài liệu lẫn mã
+  // không được quay lại suy luận sai này.
+  const noCoop = docs.concat(['sync/sync.js', 'sync/done.html', 'apps-script/Code.gs']);
+  for (const f of noCoop) {
+    assert.ok(!read(f).includes('COOP'), f + ' còn nhắc COOP');
   }
   // Hai bản README phải cùng số mục, nếu lệch là một bản đã bị sửa mà bản kia không.
   const heads = (s) => (s.match(/^## /gm) || []).length;

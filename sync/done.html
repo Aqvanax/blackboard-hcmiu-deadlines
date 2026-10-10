@@ -29,7 +29,7 @@
       }
       var data = null;
       try { data = JSON.parse(raw); } catch (e) {}
-      /* Ghi vào localStorage: đường này sống được khi popup mất opener vì COOP. */
+      /* Ghi vào localStorage: đường sống được kể cả khi popup đã mất opener. */
       try { localStorage.setItem('bbhcmiuResult', raw); } catch (e) {}
       /* Nếu còn opener thì postMessage thẳng, có hoặc không đều được. */
       try {

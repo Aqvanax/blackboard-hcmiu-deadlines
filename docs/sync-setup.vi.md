@@ -46,7 +46,9 @@ Trên trang Calendar Blackboard bấm **"Đồng bộ Google Calendar"**, rồi 
 - **Lần đầu:** Google xin mỗi người ủy quyền script một lần. Màn hình *"This app
   isn't verified" → Advanced → Go to (unsafe)* là bình thường với script cá nhân nhỏ
   — người vận hành có thể gửi xác minh sau. Bấm Allow, đóng popup, bấm Đồng bộ lần nữa.
-- **Các lần sau:** popup hiện *"Đồng bộ xong: tạo mới X, cập nhật Y."* rồi tự đóng.
+- **Các lần sau:** trang sync hiện *"Đồng bộ xong: tạo mới X, cập nhật Y."* và popup
+  kết quả tự đóng. Nếu trang chưa cập nhật thì bấm **"Quay lại trang đồng bộ"** trên
+  popup, đường này luôn chạy. Sau khi sửa mã relay, Ctrl+R trang sync rồi đồng bộ lại.
 
 ## Ghi chú
 

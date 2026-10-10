@@ -73,9 +73,12 @@ instead of duplicating them (fixed UID per Blackboard item).
 
 On the Blackboard calendar click **"Đồng bộ Google Calendar"** → the sync page lists
 your upcoming deadlines → press **"Đồng bộ vào Google Calendar"**. First run asks
-for a one-time Google authorization; later runs report *"Đồng bộ xong: tạo mới X,
-cập nhật Y."* Events land in **your own** "Blackboard Deadlines" calendar, created
-on first sync. Re-syncing updates instead of duplicating; nothing is ever deleted.
+for a one-time Google authorization; later runs show *"Đồng bộ xong: tạo mới X,
+cập nhật Y."* on the sync page and the result popup closes itself. If the page has
+not caught up yet, press **"Quay lại trang đồng bộ"** on the popup — that path
+always delivers. Events land in **your own** "Blackboard Deadlines" calendar,
+created on first sync. Re-syncing updates instead of duplicating; nothing is ever
+deleted.
 
 This needs a one-time relay deployment by one person (the *operator*) — Apps Script
 and GitHub Pages, both free. Full instructions: **[docs/sync-setup.md](./docs/sync-setup.md)**.
@@ -138,9 +141,13 @@ becomes straightforward; until then, the extension is the legitimate route.
   `credentials: 'same-origin'`) and your sync page; only the sync page then calls
   `script.google.com`. It never uses `GM_xmlhttpRequest`.
 - Sync writes into **your own** calendar using **your own** Google authorization.
-- Sync messaging uses `postMessage` where **both sides verify `event.origin`** and
-  the sending window, validate the message schema **and a per-click nonce**, never
-  use `targetOrigin "*"`, and never put event data in a URL.
+- Messages **from Blackboard** to the sync page check `event.origin`, the sending
+  window and the message schema, and never use a wildcard `targetOrigin`.
+- The **result coming back from the popup** cannot rely on `event.origin` — the
+  result card runs in Google's sandboxed iframe with an opaque origin — so it is
+  authenticated by a **per-click 128-bit nonce** plus the same schema check, or
+  read back from `localStorage` in your own browser. The manual fallback link
+  carries that same result in the popup's own URL query.
 - **Read the source before installing**, and never share your personal Blackboard
   `.ics` feed link — it contains your whole schedule.
 

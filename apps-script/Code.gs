@@ -83,8 +83,8 @@ function escapeHtml_(s) {
     .replace(/>/g, '&gt;');
 }
 
-// Thẻ kết quả trong popup: hiện thống kê thật, bắn postMessage về trang sync
-// qua opener (Google không gửi COOP nên opener sống), kèm link dự phòng.
+// Thẻ kết quả trong popup: hiện thống kê thật, đi dọc tìm opener để postMessage
+// về trang sync, kèm link dự phòng khi kênh trực tiếp không chạy.
 function card_(data, bridge) {
   var stat =
     'Đã đồng bộ xong: tạo mới ' +

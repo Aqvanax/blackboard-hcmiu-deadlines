@@ -73,9 +73,11 @@ trọn ngày. Import lại cùng file sẽ **cập nhật** đúng sự kiện c
 
 Trên trang Calendar Blackboard bấm **"Đồng bộ Google Calendar"** → trang sync liệt kê
 deadline chưa qua hạn → bấm **"Đồng bộ vào Google Calendar"**. Lần đầu Google xin ủy
-quyền một lần; các lần sau popup hiện *"Đồng bộ xong: tạo mới X, cập nhật Y."* Sự kiện
-nằm trong lịch **"Blackboard Deadlines" của chính bạn**, tự tạo ở lần đồng bộ đầu.
-Đồng bộ lại là cập nhật chứ không nhân đôi; không có gì bị tự xóa.
+quyền một lần; các lần sau trang sync hiện *"Đồng bộ xong: tạo mới X, cập nhật Y."*
+và popup kết quả tự đóng. Nếu trang chưa cập nhật kịp thì bấm **"Quay lại trang
+đồng bộ"** trên popup, đường này luôn chạy. Sự kiện nằm trong lịch **"Blackboard
+Deadlines" của chính bạn**, tự tạo ở lần đồng bộ đầu. Đồng bộ lại là cập nhật chứ
+không nhân đôi; không có gì bị tự xóa.
 
 Phần này cần một người (gọi là *người vận hành*) deploy relay một lần — Apps Script
 và GitHub Pages đều miễn phí. Hướng dẫn đầy đủ:
@@ -139,9 +141,13 @@ giản; tới lúc đó, extension là con đường hợp lệ.
   `credentials: 'same-origin'`) và trang sync của bạn; chỉ trang sync gọi tiếp
   `script.google.com`. Không dùng `GM_xmlhttpRequest`.
 - Đồng bộ ghi vào **lịch của chính bạn** bằng **ủy quyền Google của chính bạn**.
-- Giao tiếp khi đồng bộ dùng `postMessage`: **cả hai phía kiểm tra `event.origin`**
-  và cửa sổ gửi, validate cấu trúc thông điệp **và nonce mỗi lần bấm**, không dùng
-  `targetOrigin "*"`, không đưa dữ liệu sự kiện lên URL.
+- Thông điệp **từ Blackboard** vào trang sync kiểm tra `event.origin`, cửa sổ gửi và
+  cấu trúc thông điệp, không dùng `targetOrigin` kiểu wildcard.
+- **Kết quả trả về từ popup** không kiểm tra được `event.origin` vì thẻ kết quả chạy
+  trong iframe sandbox của Google với origin mờ (opaque), nên xác thực hoàn toàn bằng
+  **nonce128-bit mỗi lần bấm** cộng kiểm tra cấu trúc, hoặc đọc lại từ `localStorage`
+  trong trình duyệt của chính bạn. Link dự phòng bằng tay mang cùng kết quả trong
+  chính URL của popup.
 - **Khuyến khích đọc mã nguồn trước khi cài**, và không chia sẻ link feed `.ics` cá
   nhân của Blackboard — nó chứa toàn bộ lịch của bạn.
 

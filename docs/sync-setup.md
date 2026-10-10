@@ -47,8 +47,10 @@ On the Blackboard calendar press **"Đồng bộ Google Calendar"**, then
   *"This app isn't verified" → Advanced → Go to (unsafe)* is normal for a small
   personal script — the operator can submit it for verification later. Press Allow,
   close the popup, press sync again.
-- **Afterwards:** the popup shows *"Đồng bộ xong: tạo mới X, cập nhật Y."* and closes
-  itself.
+- **Afterwards:** the sync page shows *"Đồng bộ xong: tạo mới X, cập nhật Y."* and
+  the result popup closes itself. If the page has not updated, press
+  **"Quay lại trang đồng bộ"** on the popup — that path always works. After editing
+  the relay code, reload the sync page with Ctrl+R before syncing again.
 
 ## Notes
 

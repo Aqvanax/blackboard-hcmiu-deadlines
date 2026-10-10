@@ -111,8 +111,8 @@
     receiveEvents(data.events);
   });
 
-  /* Nhận kết quả: qua localStorage khi popup mất opener vì COOP, qua
-     postMessage khi còn. Xác thực hoàn toàn bằng nonce sinh trong runSync. */
+  /* Nhận kết quả: postMessage từ thẻ trong popup, hoặc localStorage khi popup
+     tự điều hướng về done.html. Xác thực hoàn toàn bằng nonce sinh trong runSync. */
 
   function stopWaitingResult() {
     clearTimeout(relayTimer);
@@ -140,8 +140,8 @@
     return true;
   }
 
-  /* JSONP: nạp script từ relay, mime JAVASCRIPT nên chạy được cả khi hop
-     không render (text/plain) và khi COOP cắt mọi kênh còn lại. */
+  /* JSONP: nạp script từ relay, mime JAVASCRIPT nên chạy được cả khi popup không
+     render được thẻ HtmlService, làm kênh dự phòng cuối cùng. */
   function jsonpPoll() {
     if (!relayNonce) return;
     if (jsonpScript) {
@@ -193,7 +193,7 @@
     }
   });
 
-  /* COOP có thể chặn cả event giữa 2 cửa sổ, nên vừa nghe vừa đọc tay cho chắc. */
+  /* Vừa nghe event vừa đọc tay, phòng khi event giữa hai cửa sổ không tới nơi. */
   function startWaitingResult() {
     stopWaitingResult();
     /* Key cũ là rác của lần đồng bộ trước, xoá khỏi đầu để khỏi đọc nhầm. */
@@ -337,8 +337,7 @@
     }
   });
 
-  /* Cầu nối: Apps Script điều hướng popup về done.html cùng nguồn, kết quả
-     nằm trong query. Popup đi accounts.google.com nên opener có thể đã bị COOP
-     cắt, done.html chuyển kết quả sang đây qua localStorage. */
+  /* Cầu nối: popup tự điều hướng về done.html cùng nguồn, kết quả nằm trong query.
+     Lần ủy quyền đầu qua accounts.google.com có thể cắt opener nên giữ localStorage. */
   startHandshake();
 })();
