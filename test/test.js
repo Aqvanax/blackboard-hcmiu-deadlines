@@ -399,8 +399,9 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
     'ghi log lỗi từng sự kiện, xem được ở Apps Script Executions'
   );
   assert.ok(
-    read('README.md').includes('Execute as: User'),
-    'README hướng dẫn Execute as: User để ghi vào lịch riêng từng người'
+    read('docs/sync-setup.md').includes('Execute as: User') &&
+      read('docs/sync-setup.vi.md').includes('Execute as: User'),
+    'docs/sync-setup (EN+VI) hướng dẫn Execute as: User để ghi vào lịch riêng từng người'
   );
 });
 
@@ -567,6 +568,23 @@ test('Chrome Web Store: asset listing, icon và privacy policy đủ sẵn', () 
   assert.ok(privacy.includes('Tiếng Việt'), 'privacy thiếu bản tiếng Việt');
   assert.ok(read('README.md').includes('store/README.md'), 'README thiếu liên kết checklist submit');
   assert.ok(fs.existsSync(path.join(root, 'store/make-zip.sh')), 'thiếu script đóng zip');
+});
+
+test('Tài liệu: README EN/VI song song, liên kết chéo, nhánh Pages đúng', () => {
+  const en = read('README.md');
+  const vi = read('README.vi.md');
+  assert.ok(en.includes('./README.vi.md'), 'README EN thiếu liên kết sang bản Việt');
+  assert.ok(vi.includes('./README.md'), 'README VI thiếu liên kết sang bản Anh');
+  assert.ok(en.includes('docs/sync-setup.md'), 'README EN thiếu liên kết hướng dẫn setup');
+  assert.ok(vi.includes('docs/sync-setup.vi.md'), 'README VI thiếu liên kết hướng dẫn setup');
+  const docs = ['README.md', 'README.vi.md', 'docs/sync-setup.md', 'docs/sync-setup.vi.md'];
+  // Nhánh mặc định của repo là master: tài liệu từng ghi sai thành main.
+  for (const f of docs) {
+    assert.ok(!/`main`\s*\/\s*root/.test(read(f)), f + ' còn ghi nhánh Pages là main');
+  }
+  // Hai bản README phải cùng số mục, nếu lệch là một bản đã bị sửa mà bản kia không.
+  const heads = (s) => (s.match(/^## /gm) || []).length;
+  assert.strictEqual(heads(en), heads(vi), 'README EN và VI lệch số mục');
 });
 
 function icsHasVTIMEZONE(ics) {
