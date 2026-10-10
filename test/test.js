@@ -541,6 +541,34 @@ test('Không có token/secret/mật khẩu nào trong repo', () => {
   }
 });
 
+test('Chrome Web Store: asset listing, icon và privacy policy đủ sẵn', () => {
+  const manifest = JSON.parse(read('extension/manifest.json'));
+  assert.ok(manifest.icons && manifest.icons['128'], 'manifest thiếu icons');
+  for (const size of ['16', '48', '128']) {
+    const rel = 'extension/icons/icon' + size + '.png';
+    assert.ok(fs.existsSync(path.join(root, rel)), 'thiếu ' + rel);
+    assert.ok(fs.statSync(path.join(root, rel)).size > 100, rel + ' rỗng');
+  }
+  assert.ok(
+    fs.existsSync(path.join(root, 'store/promo-440x280.png')),
+    'thiếu promo tile store'
+  );
+  const listing = read('store/listing.md');
+  const shortDesc = /## Short description[^\n]*\n\n```\n([^\n]+)\n```/.exec(listing);
+  assert.ok(shortDesc, 'listing thiếu short description');
+  assert.ok(shortDesc[1].length <= 132, 'short description quá 132 ký tự');
+  assert.ok(listing.includes('privacy.html'), 'listing thiếu privacy policy URL');
+  assert.ok(
+    read('store/README.md').includes('chrome.google.com/webstore/dev/console'),
+    'store README thiếu hướng dẫn tài khoản nhà phát triển'
+  );
+  const privacy = read('privacy.html');
+  assert.ok(privacy.includes('blackboard.hcmiu.edu.vn'), 'privacy mô tả thiếu trang truy cập');
+  assert.ok(privacy.includes('Tiếng Việt'), 'privacy thiếu bản tiếng Việt');
+  assert.ok(read('README.md').includes('store/README.md'), 'README thiếu liên kết checklist submit');
+  assert.ok(fs.existsSync(path.join(root, 'store/make-zip.sh')), 'thiếu script đóng zip');
+});
+
 function icsHasVTIMEZONE(ics) {
   return ics.includes('VTIMEZONE');
 }

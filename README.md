@@ -51,7 +51,9 @@ Pick one option — all three run the same code:
    → pick the [`extension/`](./extension/) folder; Firefox → `about:debugging` →
    **Load Temporary Add-on** → pick `manifest.json`.
 3. To distribute to everyone: submit the `extension/` folder to the Chrome Web Store
-   or Firefox Add-ons. The manifest requests **no extra permissions**.
+   or Firefox Add-ons — [`store/`](./store/) already has icons, the store listing
+   text and a step-by-step checklist ([`store/README.md`](./store/README.md)).
+   The manifest requests **no extra permissions**.
 
 Building from source (optional): `node build.js` — no npm dependencies.
 Phase 2 additionally needs the one-time relay setup in [Usage B](#3-usage);
@@ -232,7 +234,8 @@ Chọn 1 trong 3 cách — cùng một mã nguồn:
    **Load unpacked** → chọn thư mục [`extension/`](./extension/); Firefox →
    `about:debugging` → **Load Temporary Add-on** → chọn `manifest.json`.
 3. Muốn chia sẻ cho mọi người: submit thư mục `extension/` lên Chrome Web Store hoặc
-   Firefox Add-ons. Manifest **không xin quyền thừa**.
+   Firefox Add-ons — [`store/`](./store/) đã có icon, nội dung listing và checklist
+   từng bước ([`store/README.md`](./store/README.md)). Manifest **không xin quyền thừa**.
 
 Tự build từ nguồn (không bắt buộc): `node build.js` — không cần npm dependency.
 Giai đoạn 2 cần thêm cấu hình relay một lần ở [Cách dùng B](#3-cách-dùng);

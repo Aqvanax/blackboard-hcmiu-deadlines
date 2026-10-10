@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy: Blackboard HCMIU Deadlines</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 760px; margin: 32px auto;
+           padding: 0 20px; color: #111827; line-height: 1.6; }
+    h1 { font-size: 24px; } h2 { font-size: 18px; margin-top: 28px; }
+    .meta { color: #6b7280; font-size: 13px; }
+    code { background: #f3f4f6; padding: 1px 5px; border-radius: 4px; }
+    hr { border: none; border-top: 1px solid #e5e7eb; margin: 28px 0; }
+  </style>
+</head>
+<body>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Project: Blackboard HCMIU Deadlines (userscript, bookmarklet,
+    browser extension) &middot; Last updated: 2026-10-10 &middot; License: MIT</p>
+
+  <h2>English</h2>
+  <p>This is a personal, open-source tool for the Blackboard Learn instance at
+    <code>blackboard.hcmiu.edu.vn</code>. It has no server of its own.</p>
+  <ul>
+    <li><strong>What it does:</strong> reads your upcoming calendar deadlines from
+      the Blackboard page you are already logged into, shows them as a downloadable
+      <code>.ics</code> file, and, only when you press the sync button, sends them to
+      an Apps Script web app that you or the project maintainer deployed, which
+      writes them to the Google Calendar account you are signed into.</li>
+    <li><strong>Data collected by the developer:</strong> none. There is no database,
+      no analytics, no cookies, no ads, and no telemetry.</li>
+    <li><strong>Data in transit:</strong> deadlines travel from your browser to
+      Google's own endpoints only (the Apps Script relay and the Google Calendar
+      API), under your own Google sign-in and consent. Calendar titles and times
+      are visible to Google as with any calendar client; nothing is stored
+      anywhere else.</li>
+    <li><strong>Permissions:</strong> the extension injects its buttons on
+      <code>blackboard.hcmiu.edu.vn/webapps/calendar/*</code> only and requests no
+      other host access, no API keys, and no background privileges.</li>
+    <li><strong>Third parties:</strong> Google (Apps Script, Calendar API). The
+      Blackboard site itself is operated by your institution; this project is not
+      affiliated with it.</li>
+    <li><strong>Your choice:</strong> uninstall or remove the userscript at any
+      time; delete the "Blackboard Deadlines" calendar in Google Calendar to remove
+      all synced data.</li>
+    <li><strong>Contact:</strong> open an issue at
+      <a href="https://github.com/Aqvanax/blackboard-hcmiu-deadlines">github.com/Aqvanax/blackboard-hcmiu-deadlines</a>.</li>
+  </ul>
+
+  <hr>
+
+  <h2>Tiếng Việt</h2>
+  <p>Đây là công cụ nguồn mở, làm cá nhân cho hệ thống Blackboard Learn của
+    <code>blackboard.hcmiu.edu.vn</code>. Dự án không có máy chủ riêng.</p>
+  <ul>
+    <li><strong>Chức năng:</strong> đọc danh sách deadline sắp tới từ trang
+      Blackboard mà bạn đang đăng nhập, xuất ra file <code>.ics</code> để tải về,
+      và (chỉ khi bạn bấm nút đồng bộ) gửi tới Apps Script web app để ghi vào
+      Google Calendar của chính bạn.</li>
+    <li><strong>Dữ liệu do người phát triển thu thập:</strong> không có. Không cơ
+      sở dữ liệu, không phân tích lưu lượng, không cookie, không quảng cáo.</li>
+    <li><strong>Dữ liệu khi truyền:</strong> deadline chỉ đi từ trình duyệt của bạn
+      đến các dịch vụ của Google (relay Apps Script và Google Calendar API) dưới
+      tài khoản và sự đồng ý Google của bạn.</li>
+    <li><strong>Quyền hạn:</strong> extension chỉ chèn nút trên
+      <code>blackboard.hcmiu.edu.vn/webapps/calendar/*</code>, không xin quyền
+      truy cập trang khác, không có quyền chạy nền.</li>
+    <li><strong>Bên thứ ba:</strong> Google (Apps Script, Calendar API). Trang
+      Blackboard thuộc quản lý của nhà trường, dự án không liên kết với Blackboard
+      hay nhà trường.</li>
+    <li><strong>Quyền của bạn:</strong> gỡ extension hoặc userscript bất cứ lúc
+      nào; xóa lịch "Blackboard Deadlines" trong Google Calendar để xóa toàn bộ
+      dữ liệu đã đồng bộ.</li>
+    <li><strong>Liên hệ:</strong> mở issue tại
+      <a href="https://github.com/Aqvanax/blackboard-hcmiu-deadlines">github.com/Aqvanax/blackboard-hcmiu-deadlines</a>.</li>
+  </ul>
+</body>
+</html>
