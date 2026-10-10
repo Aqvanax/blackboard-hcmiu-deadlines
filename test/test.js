@@ -424,6 +424,14 @@ test('Kết quả sync đến được trang sync dù popup mất opener vì COO
   );
   assert.ok(!src.includes('consumeBridgeResult'), 'đã bỏ cầu nối cũ phụ thuộc window.opener');
   assert.ok(src.includes('acceptResult'), 'kết quả được xác thực bằng nonce qua acceptResult');
+  assert.ok(
+    src.includes("localStorage.getItem('bbhcmiuResult')"),
+    'polling đọc trực tiếp localStorage phòng event bị COOP chặn'
+  );
+  assert.ok(
+    src.includes('setInterval') && src.includes('stopWaitingResult'),
+    'vòng đợi kết quả có hẹn giờ và dọn dẹp khi nhận được'
+  );
 });
 
 console.log('File build & an ninh');

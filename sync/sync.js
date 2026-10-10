@@ -26,6 +26,7 @@
   let relayPopup = null;
   let relayNonce = null;
   let relayTimer = null;
+  let relayPollTimer = null;
 
   const $ = (id) => document.getElementById(id);
 
@@ -111,11 +112,16 @@
   /* Nhận kết quả: qua localStorage khi popup mất opener vì COOP, qua
      postMessage khi còn. Xác thực hoàn toàn bằng nonce sinh trong runSync. */
 
+  function stopWaitingResult() {
+    clearTimeout(relayTimer);
+    clearInterval(relayPollTimer);
+  }
+
   function acceptResult(data) {
     if (!data || data.type !== 'bbhcmiu-result') return false;
     if (!relayNonce || data.nonce !== relayNonce) return false;
     relayNonce = null;
-    clearTimeout(relayTimer);
+    stopWaitingResult();
     showSummary(data.created || 0, data.updated || 0, data.failed || 0, data.errors || []);
     return true;
   }
@@ -140,6 +146,43 @@
       } catch (err) {}
     }
   });
+
+  /* COOP có thể chặn cả event giữa 2 cửa sổ, nên vừa nghe vừa đọc tay cho chắc. */
+  function startWaitingResult() {
+    stopWaitingResult();
+    relayTimer = setTimeout(function () {
+      if (!relayNonce) return;
+      $('result').textContent =
+        'Chưa nhận được kết quả. Nếu cửa sổ mở ra yêu cầu đăng nhập hoặc Allow, hoàn tất rồi bấm Đồng bộ lại. ';
+      const link = document.createElement('a');
+      link.href = RELAY_URL;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.textContent = 'Mở trang ủy quyền';
+      $('result').appendChild(link);
+    }, 12000);
+    relayPollTimer = setInterval(function () {
+      let raw = null;
+      try {
+        raw = localStorage.getItem('bbhcmiuResult');
+      } catch (err) {
+        return;
+      }
+      if (!raw) return;
+      let data = null;
+      try {
+        data = JSON.parse(raw);
+      } catch (err) {
+        return;
+      }
+      /* Đọc tay cũng bỏ qua nonce lệch, chỉ xoá khi thực sự tiêu thụ. */
+      if (acceptResult(data)) {
+        try {
+          localStorage.removeItem('bbhcmiuResult');
+        } catch (err) {}
+      }
+    }, 700);
+  }
 
   /* Gửi sang Apps Script relay qua popup form POST */
 
@@ -187,18 +230,7 @@
     }
     $('result').textContent =
       'Đang mở cửa sổ đồng bộ… Lần đầu Google sẽ hỏi bạn ủy quyền 1 lần.';
-    clearTimeout(relayTimer);
-    relayTimer = setTimeout(function () {
-      if (!relayNonce) return;
-      $('result').textContent =
-        'Chưa nhận được kết quả. Nếu cửa sổ mở ra yêu cầu đăng nhập hoặc Allow, hoàn tất rồi bấm Đồng bộ lại. ';
-      const link = document.createElement('a');
-      link.href = RELAY_URL;
-      link.target = '_blank';
-      link.rel = 'noopener';
-      link.textContent = 'Mở trang ủy quyền';
-      $('result').appendChild(link);
-    }, 12000);
+    startWaitingResult();
   }
 
   function showSummary(created, updated, failed, errors) {
