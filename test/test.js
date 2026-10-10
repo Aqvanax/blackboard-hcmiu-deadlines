@@ -473,7 +473,7 @@ test('Chỉ gọi các domain được phép', () => {
     'blackboard.hcmiu.edu.vn',
     'accounts.google.com',
     'www.googleapis.com',
-    'your-username.github.io', // trang sync (placeholder, đổi theo repo của bạn)
+    'aqvanax.github.io', // trang sync trên GitHub Pages
     'localhost', // trang sync local khi test
     'script.google.com' // Apps Script relay (Giai đoạn 2)
   ]);

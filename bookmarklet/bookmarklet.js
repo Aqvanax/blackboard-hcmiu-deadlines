@@ -4,6 +4,6 @@
 javascript: (function () {
   var s = document.createElement('script');
   s.src =
-    'https://YOUR-USERNAME.github.io/blackboard-hcmiu-deadlines/blackboard-deadlines.user.js';
+    'https://aqvanax.github.io/blackboard-hcmiu-deadlines/blackboard-deadlines.user.js';
   document.body.appendChild(s);
 })();

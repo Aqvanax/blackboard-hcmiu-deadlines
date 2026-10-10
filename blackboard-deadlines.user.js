@@ -385,7 +385,7 @@ const BB_CONFIG = {
   START_AT_TODAY_VN: false,
   // Trang sync Giai đoạn 2, sau khi đổi chạy node build.js và cài lại script.
   // Đang test local: đổi thành URL GitHub Pages khi deploy thật.
-  SYNC_PAGE_URL: 'http://localhost:8000/sync/'
+  SYNC_PAGE_URL: 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/'
 };
 
 /* Origin trang sync để kiểm tra postMessage, không dùng wildcard. */
