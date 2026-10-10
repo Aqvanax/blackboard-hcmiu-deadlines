@@ -387,16 +387,16 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(gs.includes('e.parameter'), 'nhận payload từ form POST');
   assert.ok(gs.includes('bbhcmiuResult'), 'trả kết quả qua cầu nối bbhcmiuResult');
   assert.ok(
-    gs.includes("setMimeType('text/html')"),
-    'doPost ép text/html bằng string (enum MimeType không có thành viên HTML)'
+    gs.includes('HtmlService.createHtmlOutput(card_'),
+    'doPost trả thẻ HtmlService (ContentService không serve được text/html)'
   );
   assert.ok(
-    gs.includes('http-equiv="refresh"'),
-    'meta refresh phòng khi script bị chặn'
+    gs.includes('parent.opener.postMessage'),
+    'thẻ bắn postMessage về trang sync qua opener (Google không gửi COOP)'
   );
   assert.ok(
-    gs.includes("'v8-html-jsonp'"),
-    'CODE_VERSION đánh dấu relay bản redirect để chẩn đoán từ popup'
+    gs.includes("'v9-card-postmessage'"),
+    'CODE_VERSION đánh dấu relay bản thẻ để chẩn đoán từ popup'
   );
   assert.ok(
     gs.includes("action === 'result'") && gs.includes('MimeType.JAVASCRIPT'),
@@ -409,6 +409,10 @@ test('Giai đoạn 2: relay Apps Script, không Client ID, upsert insert→409�
   assert.ok(
     src.includes('bbhcmiuPoll') && src.includes('relayPopup.close()'),
     'trang sync poll JSONP và đóng popup B khi nhận được kết quả'
+  );
+  assert.ok(
+    src.includes("event.origin !== 'null'"),
+    'trang sync nhận postMessage từ iframe sandbox (origin null), nonce xác thực'
   );
   assert.ok(
     gs.includes('SYNC_DONE_URL'),

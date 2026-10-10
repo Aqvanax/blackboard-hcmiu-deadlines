@@ -172,7 +172,13 @@
   };
 
   window.addEventListener('message', function (event) {
-    if (event.origin !== RELAY_ORIGIN && event.origin !== location.origin) return;
+    /* Origin 'null' là thẻ HtmlService trong iframe sandbox, xác thực bằng nonce. */
+    if (
+      event.origin !== RELAY_ORIGIN &&
+      event.origin !== location.origin &&
+      event.origin !== 'null'
+    )
+      return;
     acceptResult(event.data);
   });
 
@@ -202,14 +208,14 @@
     relayTimer = setTimeout(function () {
       if (!relayNonce) return;
       $('result').textContent =
-        'Chưa nhận được kết quả. Nếu cửa sổ mở ra yêu cầu đăng nhập hoặc Allow, hoàn tất rồi bấm Đồng bộ lại. ';
+        'Chưa nhận được kết quả. Nếu popup đang hỏi ủy quyền, hoàn tất rồi bấm Đồng bộ lại; nếu popup hiện “Đã đồng bộ xong”, bấm link “Quay lại trang đồng bộ” trên đó. ';
       const link = document.createElement('a');
       link.href = RELAY_URL;
       link.target = '_blank';
       link.rel = 'noopener';
       link.textContent = 'Mở trang ủy quyền';
       $('result').appendChild(link);
-    }, 12000);
+    }, 20000);
     relayPollTimer = setInterval(function () {
       let raw = null;
       try {

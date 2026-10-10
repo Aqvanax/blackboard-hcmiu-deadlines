@@ -4,7 +4,7 @@
 
 var CALENDAR_NAME = 'Blackboard Deadlines';
 var TIME_ZONE = 'Asia/Ho_Chi_Minh';
-var CODE_VERSION = 'v8-html-jsonp';
+var CODE_VERSION = 'v9-card-postmessage';
 // Trang nhận kết quả, cố định ở đây không tin syncUrl gửi từ client.
 var SYNC_DONE_URL = 'https://aqvanax.github.io/blackboard-hcmiu-deadlines/sync/done.html';
 
@@ -71,31 +71,9 @@ function doPost(e) {
   // Lưu kết quả vào Script Property (1 khóa cố định) để trang sync đọc lại
   // bằng JSONP khi popup không tự điều hướng được, không bao giờ timeout oan.
   PropertiesService.getScriptProperties().setProperty('bbResult', JSON.stringify(data));
-  // Trang HTML nhỏ tự điều hướng: ContentService trả thẳng tài liệu cấp cao
-  // nhất, không iframe nên popup về done.html, đóng cửa sổ và localStorage chạy.
-  var hop =
-    '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">' +
-    '<meta http-equiv="refresh" content="0;url=' +
-    escapeHtml_(bridge) +
-    '">' +
-    '<title>Đang quay lại trang đồng bộ</title></head>' +
-    '<body style="font:15px system-ui">' +
-    '<p>Đã đồng bộ xong, đang quay lại trang đồng bộ…</p>' +
-    '<script>location.href=' +
-    JSON.stringify(bridge) +
-    ';</' +
-    'script>' +
-    '<p><a href="' +
-    escapeHtml_(bridge) +
-    '">Bấm vào đây nếu trang không tự chuyển</a></p>' +
-    '</body></html>';
-  var out = ContentService.createTextOutput(hop);
-  try {
-    // Enum MimeType không có HTML nên ép bằng string trực tiếp; nếu runtime
-    // chối thì vẫn là text/plain, JSONP và nút đóng handle lo phần kết quả.
-    out.setMimeType('text/html');
-  } catch (ignored) {}
-  return out;
+  // Thẻ HtmlService render thật trong popup và bắn kết quả về trang sync,
+  // vì ContentService không bao giờ trả được text/html (enum không có HTML).
+  return HtmlService.createHtmlOutput(card_(data, bridge));
 }
 
 function escapeHtml_(s) {
@@ -103,6 +81,50 @@ function escapeHtml_(s) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+// Thẻ kết quả trong popup: hiện thống kê thật, bắn postMessage về trang sync
+// qua opener (Google không gửi COOP nên opener sống), kèm link dự phòng.
+function card_(data, bridge) {
+  var stat =
+    'Đã đồng bộ xong: tạo mới ' +
+    data.created +
+    ', cập nhật ' +
+    data.updated +
+    (data.failed ? ', lỗi ' + data.failed : '') +
+    '.';
+  var detail = data.error || (data.errors || []).join(' | ');
+  /* Chèn JSON vào thẻ script, vô hiệu chuỗi đóng nháy kép trong dữ liệu. */
+  var json = JSON.stringify(data).replace(/<\//g, '<\\/');
+  return (
+    '<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">' +
+    '<title>Đồng bộ Google Calendar</title><style>' +
+    'body{font:15px/1.5 system-ui,sans-serif;margin:24px;color:#111827}' +
+    '.ok{font-weight:600}.muted{color:#6b7280;font-size:13px}' +
+    'a{color:#2563eb}</style></head><body>' +
+    '<p class="ok">' +
+    stat +
+    '</p>' +
+    (detail ? '<p>' + escapeHtml_(detail) + '</p>' : '') +
+    '<p class="muted">Đang chuyển kết quả về trang đồng bộ…</p>' +
+    '<p><a href="' +
+    escapeHtml_(bridge) +
+    '" target="_top">Quay lại trang đồng bộ</a></p>' +
+    '<p><a href="' +
+    escapeHtml_(bridge) +
+    '" target="_blank">Mở trang đồng bộ ở tab mới</a></p>' +
+    '<script>(function(){var d=' +
+    json +
+    ';' +
+    'try{if(window.parent&&window.parent.opener){window.parent.opener.postMessage(d,"*");}}catch(e){}' +
+    'try{window.top.location.href=' +
+    JSON.stringify(bridge) +
+    ';}catch(e){}' +
+    'setTimeout(function(){try{window.top.close();}catch(e){}' +
+    'try{window.close();}catch(e){}},600);' +
+    '})();</' +
+    'script></body></html>'
+  );
 }
 
 // Đồng bộ theo tài khoản của người ĐANG GỌI (Execute as: User accessing).
